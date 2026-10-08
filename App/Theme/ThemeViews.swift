@@ -7,7 +7,7 @@ struct ThemeGallery: View {
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 20) {
-                Text("静かな光を、毎日の入力に。").font(.title3).frame(maxWidth: .infinity, alignment: .leading)
+                Text("好きなカラーを、毎日の入力に。").font(.title3).frame(maxWidth: .infinity, alignment: .leading)
                 ForEach(ThemeCatalog.presets) { preset in
                     let selection = selection(preset.id)
                     VStack(alignment: .leading, spacing: 10) {
@@ -19,13 +19,13 @@ struct ThemeGallery: View {
                             }
                         }
                         KeyboardPreview(selection: selection)
-                        Button("このテーマを適用") { model.applyTheme(selection) }.buttonStyle(.borderedProminent)
+                        Button("このカラーを適用") { model.applyTheme(selection) }.buttonStyle(.borderedProminent)
                     }.padding().background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20))
                 }
-                NavigationLink("現在のテーマを編集") { ThemeEditor(model: model) }
+                NavigationLink("カラーを編集") { ThemeEditor(model: model) }
                 Text("すべて端末内で利用できます。テーマはキーの配置を変更しません。") .font(.footnote)
             }.padding()
-        }.navigationTitle("テーマギャラリー")
+        }.navigationTitle("カラーパレット")
     }
     private func selection(_ id: String) -> ThemeSelection { var value = ThemeSelection(); value.presetID = id; return value }
 }
@@ -35,70 +35,34 @@ struct ThemeEditor: View {
     @Environment(\.dismiss) private var dismiss
     @State private var draft: ThemeSelection
     @State private var tokens: ThemeTokens
-    @State private var imageData: Data?
-    @State private var image: UIImage?
-    @State private var importing = false
-    @State private var busy = false
-    @State private var failure: String?
     init(model: AppModel) {
         self.model = model
         _draft = State(initialValue: model.appearance)
         _tokens = State(initialValue: model.appearance.tokens)
-        _image = State(initialValue: model.themeImage)
     }
     private var preview: ThemeSelection {
-        var value = draft
-        value.custom = tokens == ThemeCatalog.preset(draft.presetID).tokens ? nil : tokens
+        var value = draft; value.custom = tokens; value.imageName = nil
         return value
     }
     var body: some View {
         Form {
-            Section { KeyboardPreview(selection: preview, profile: model.preferences.portrait, image: image) }
+            Section { KeyboardPreview(selection: preview) }
             Section("カラー") {
                 ThemeColorPicker(title: "背景", hex: $tokens.background)
                 ThemeColorPicker(title: "キー", hex: $tokens.key)
                 ThemeColorPicker(title: "文字", hex: $tokens.text)
                 ThemeColorPicker(title: "アクセント", hex: $tokens.accent)
-                Text("読みやすさのため、文字とキーのコントラストが不足する色は表示時に補正します。") .font(.footnote)
-            }
-            Section("キーの表現") {
-                Text("角丸 \(Int(tokens.cornerRadius))"); Slider(value: $tokens.cornerRadius, in: 0...20, step: 1)
-                Text("不透明度 \(Int(tokens.opacity * 100))%"); Slider(value: $tokens.opacity, in: 0.65...1, step: 0.01)
-                Text("枠線 \(tokens.borderWidth, specifier: "%.1f")"); Slider(value: $tokens.borderWidth, in: 0...3, step: 0.5)
-                Text("影 \(Int(tokens.shadowOpacity * 100))%"); Slider(value: $tokens.shadowOpacity, in: 0...0.3, step: 0.01)
-                Toggle("静かな星の背景", isOn: $tokens.stars)
-                Toggle("ダークな画面表示", isOn: $tokens.dark)
-            }
-            Section("背景画像") {
-                Button(busy ? "画像を処理中…" : "端末内の画像を選択") { importing = true }.disabled(busy)
-                Button("画像を外す", role: .destructive) { draft.imageName = nil; imageData = nil; image = nil }
-                Text("ネットワーク不要の静止画像を選択してください。1024px以下に縮小し、位置情報などのメタデータを引き継がず保存します。背景は淡く表示します。") .font(.footnote)
-                if let failure { Text(failure).foregroundStyle(.red) }
+                Text("文字が読みづらい組み合わせは、表示時にコントラストを補正します。") .font(.footnote)
             }
             Section {
-                Button("変更を保存") { if model.applyTheme(preview, imageData: imageData) { dismiss() } }.disabled(busy)
-                Button("このテーマの初期状態に戻す") { draft.custom = nil; draft.imageName = nil; tokens = ThemeCatalog.preset(draft.presetID).tokens; imageData = nil; image = nil }
-                Button("未使用の背景画像を削除", role: .destructive) { model.cleanThemeImages() }
+                Button("カラーを保存") { if model.applyTheme(preview) { dismiss() } }
+                Button("このパレットのカラーに戻す") { tokens = ThemeCatalog.preset(draft.presetID).tokens }
             }
-        }.navigationTitle("テーマ編集")
-            .fileImporter(isPresented: $importing, allowedContentTypes: [.image]) { result in
-                switch result {
-                case .failure(let error): failure = error.localizedDescription
-                case .success(let url):
-                    busy = true; failure = nil
-                    Task { @MainActor in
-                        do {
-                            let normalized = try await Task.detached(priority: .userInitiated) { try ThemeImageImporter.normalize(url) }.value
-                            imageData = normalized; image = UIImage(data: normalized)
-                        } catch { failure = error.localizedDescription }
-                        busy = false
-                    }
-                }
-            }
+        }.navigationTitle("カラー編集")
     }
 }
 
-private struct ThemeColorPicker: View {
+struct ThemeColorPicker: View {
     let title: String
     @Binding var hex: String
     var body: some View {
@@ -113,12 +77,14 @@ private struct ThemeColorPicker: View {
 
 struct PreviewScreen: View {
     @ObservedObject var model: AppModel
-    @State private var landscape = false
+    @State private var mode: KeyboardPreviewMode = .japanese
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                Picker("設定の向き", selection: $landscape) { Text("縦").tag(false); Text("横").tag(true) }.pickerStyle(.segmented)
-                KeyboardPreview(selection: model.appearance, profile: model.preferences.profile(landscape: landscape), image: model.themeImage)
+                Picker("配列", selection: $mode) {
+                    ForEach(KeyboardPreviewMode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                }.pickerStyle(.segmented)
+                KeyboardPreview(selection: model.appearance, profile: LayoutProfile(), showsCandidates: model.preferences.showsCandidates, mode: mode)
                 Text("高さ・幅・フリック・変換候補の実際の動作は、iPhoneでキーボードを有効にして確認します。")
             }.padding()
         }.navigationTitle("キーボードプレビュー")
@@ -132,14 +98,14 @@ struct DashboardView: View {
             VStack(alignment: .leading, spacing: 24) {
                 Text("あなたの言葉に、\n静かな余白を。").font(.largeTitle.bold())
                 Text("MY KEYBOARD · OFFLINE").font(.caption.weight(.semibold))
-                KeyboardPreview(selection: model.appearance, profile: model.preferences.portrait, image: model.themeImage)
+                KeyboardPreview(selection: model.appearance, showsCandidates: model.preferences.showsCandidates)
                 NavigationLink { ThemeGallery(model: model) } label: { Label("テーマを選ぶ", systemImage: "paintpalette") }.buttonStyle(.borderedProminent)
-                NavigationLink("テーマをカスタマイズ") { ThemeEditor(model: model) }
+                NavigationLink("カラーを編集") { ThemeEditor(model: model) }
                 NavigationLink("プレビュー") { PreviewScreen(model: model) }
                 NavigationLink("キーボード設定") { SettingsView(model: model) }
                 NavigationLink("キーボードの使い方") { OnboardingView() }
                 NavigationLink("プライバシー・アプリ情報") { PrivacyInfoView() }
-                Text("文字入力・変換・テーマは端末内で処理します。画像や入力内容を送信しません。") .font(.footnote)
+                Text("文字入力・変換・テーマは端末内で処理します。入力内容を送信しません。") .font(.footnote)
             }.padding(20)
         }.navigationTitle("MyKeyboard")
     }
@@ -156,7 +122,7 @@ struct PrivacyInfoView: View {
             Section("端末内のデータ") {
                 Text("設定・テーマ・ユーザー辞書は本体とキーボードで共有します。学習はキーボード内に保存します。")
                 Text("クリップボード履歴は手動で保存した内容だけを扱います。コピーの常時監視は行いません。")
-                Text("テーマ画像は縮小して保存し、元画像の位置情報を引き継ぎません。未使用画像はテーマ編集から削除できます。")
+                Text("サイズとキーの表現は固定です。背景・キー・文字・アクセントのカラーを変更できます。")
             }
             Section("フルアクセス") {
                 Text("共有履歴の保存にはフルアクセスが必要です。本アプリは入力内容を送信する機能を持ちません。設定を許可しない場合も基本入力を利用する設計です。")

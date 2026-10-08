@@ -18,7 +18,7 @@ import KanaKanjiConverterModuleWithDefaultDictionary
         do { try SharedContainer.preparePrivateDirectory(learningDirectory) }
         catch { learningAvailable = false }
     }
-    func candidates(for reading: String, preferences: KeyboardPreferences, dictionary: [DictionaryEntry]) -> [ConversionChoice] {
+    func candidates(for reading: String, preferences: KeyboardPreferences, dictionary: [DictionaryEntry], prediction: Bool = true) -> [ConversionChoice] {
         guard !reading.isEmpty else { return [] }
         if resetID != preferences.learningResetID {
             converter.stopComposition()
@@ -38,7 +38,7 @@ import KanaKanjiConverterModuleWithDefaultDictionary
         input.insertAtCursorPosition(reading, inputStyle: .direct)
         let start = ProcessInfo.processInfo.systemUptime
         let options = ConvertRequestOptions.withDefaultDictionary(
-            N_best: 10, requireJapanesePrediction: false, requireEnglishPrediction: false,
+            N_best: 10, requireJapanesePrediction: prediction, requireEnglishPrediction: false,
             keyboardLanguage: .ja_JP, learningType: preferences.learningEnabled && learningAvailable ? .inputAndOutput : .nothing,
             maxMemoryCount: 4096, memoryDirectoryURL: learningDirectory,
             sharedContainerURL: learningDirectory, metadata: .init(versionString: "MyKeyboard 0.1")
@@ -50,7 +50,10 @@ import KanaKanjiConverterModuleWithDefaultDictionary
         }.prefix(10))
         lastLatencyMilliseconds = (ProcessInfo.processInfo.systemUptime - start) * 1000
         let custom = dictionary.filter { $0.reading == reading }.map { ConversionChoice($0.text) }
-        let engine = engineCandidates.enumerated().map { ConversionChoice($0.element.text, token: $0.offset) }
+        let engine = engineCandidates.enumerated().map { index, candidate in
+            let segments = candidate.data.map { ConversionSegment(reading: KanaModifier.hiragana($0.ruby), text: $0.word) }
+            return ConversionChoice(candidate.text, token: index, segments: segments, isPrediction: segments.map(\.reading).joined() != reading)
+        }
         return custom + engine + [.init(reading), .init(KanaModifier.katakana(reading))]
     }
     func commit(_ choice: ConversionChoice, learning: Bool) {

@@ -3,7 +3,11 @@ import Foundation
 public struct ConversionChoice: Equatable, Sendable {
     public let text: String
     public let token: Int?
-    public init(_ text: String, token: Int? = nil) { self.text = text; self.token = token }
+    public let isPrediction: Bool
+    public let segments: [ConversionSegment]
+    public init(_ text: String, token: Int? = nil, segments: [ConversionSegment] = [], isPrediction: Bool = false) {
+        self.text = text; self.token = token; self.segments = segments; self.isPrediction = isPrediction
+    }
 }
 
 public struct Composition: Sendable {
@@ -11,6 +15,7 @@ public struct Composition: Sendable {
     public private(set) var cursor = 0
     public private(set) var revision: UInt64 = 0
     public private(set) var candidates: [ConversionChoice] = []
+    public var liveChoice: ConversionChoice { candidates.first(where: { !$0.isPrediction }) ?? .init(reading) }
     public let maximumLength: Int
     public init(maximumLength: Int = 128) { self.maximumLength = max(1, maximumLength) }
 
@@ -63,6 +68,11 @@ public enum KanaModifier {
             if let index = chars.firstIndex(of: character) { return chars[(index + 1) % chars.count] }
         }
         return nil
+    }
+    public static func hiragana(_ text: String) -> String {
+        String(String.UnicodeScalarView(text.unicodeScalars.map { scalar in
+            (0x30A1...0x30F6).contains(scalar.value) ? UnicodeScalar(scalar.value - 0x60)! : scalar
+        }))
     }
     public static func katakana(_ text: String) -> String {
         String(String.UnicodeScalarView(text.unicodeScalars.map { scalar in

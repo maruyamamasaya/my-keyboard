@@ -70,14 +70,16 @@ def project_model():
         source_paths = sorted(str(p.relative_to(ROOT)).replace("\\", "/") for p in (ROOT / folder).rglob("*.swift")) + shared
         if name != "StorageTests":
             source_paths += design
+        else:
+            source_paths += sorted(str(p.relative_to(ROOT)).replace("\\", "/") for p in (ROOT / "KeyboardExtension").rglob("*.swift")) + design
         source_build = [add(f"source:{name}:{p}", "PBXBuildFile", fileRef=file(p)) for p in source_paths]
         source_phase = add("sources:" + name, "PBXSourcesBuildPhase", buildActionMask=2147483647, files=source_build, runOnlyForDeploymentPostprocessing=0)
         target_resources = resources + (["App/Assets.xcassets"] if name == "MyKeyboard" else [])
         resource_build = [add(f"resource:{name}:{p}", "PBXBuildFile", fileRef=file(p)) for p in target_resources]
         resource_phase = add("resources:" + name, "PBXResourcesBuildPhase", buildActionMask=2147483647, files=resource_build, runOnlyForDeploymentPostprocessing=0)
         dependencies = [add("core-product:" + name, "XCSwiftPackageProductDependency", productName="KeyboardCore")]
-        if name == "MyKeyboardExtension":
-            dependencies.append(add("converter-product", "XCSwiftPackageProductDependency", package=remote_package, productName="KanaKanjiConverterModuleWithDefaultDictionary"))
+        if name in ("MyKeyboardExtension", "StorageTests"):
+            dependencies.append(add("converter-product:" + name, "XCSwiftPackageProductDependency", package=remote_package, productName="KanaKanjiConverterModuleWithDefaultDictionary"))
         framework_build = [add(f"framework:{name}:{dependency}", "PBXBuildFile", productRef=dependency) for dependency in dependencies]
         framework_phase = add("frameworks:" + name, "PBXFrameworksBuildPhase", buildActionMask=2147483647, files=framework_build, runOnlyForDeploymentPostprocessing=0)
         product = add("product:" + name, "PBXFileReference", explicitFileType=file_type, includeInIndex=0, path=product_name, sourceTree="BUILT_PRODUCTS_DIR")
@@ -85,7 +87,7 @@ def project_model():
         settings = {
             "PRODUCT_NAME": "$(TARGET_NAME)", "PRODUCT_BUNDLE_IDENTIFIER": bundle_id,
             "SDKROOT": "iphoneos", "SUPPORTED_PLATFORMS": "iphoneos iphonesimulator", "TARGETED_DEVICE_FAMILY": "1",
-            "MARKETING_VERSION": "0.1.0", "CURRENT_PROJECT_VERSION": "1", "CLANG_ENABLE_MODULES": "YES",
+            "MARKETING_VERSION": "0.1.0", "CURRENT_PROJECT_VERSION": "2", "CLANG_ENABLE_MODULES": "YES",
             "LD_RUNPATH_SEARCH_PATHS": ["$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks"],
             "OTHER_LDFLAGS": ["$(inherited)", "-lsqlite3"],
         }
@@ -98,7 +100,7 @@ def project_model():
             settings["CODE_SIGN_ENTITLEMENTS"] = f"Config/{name}.entitlements"
             file(settings["INFOPLIST_FILE"]); file(settings["CODE_SIGN_ENTITLEMENTS"])
         if name != "MyKeyboard":
-            settings["APPLICATION_EXTENSION_API_ONLY"] = "YES"
+            settings["APPLICATION_EXTENSION_API_ONLY"] = "NO" if name == "StorageTests" else "YES"
             settings["SKIP_INSTALL"] = "YES"
         phases = [source_phase, framework_phase, resource_phase]
         target_dependencies = []
