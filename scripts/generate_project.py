@@ -37,7 +37,7 @@ def project_model():
     def file(path):
         if path not in files:
             suffix = Path(path).suffix
-            kind = {".swift": "sourcecode.swift", ".xcconfig": "text.xcconfig", ".plist": "text.plist.xml", ".entitlements": "text.plist.entitlements"}.get(suffix, "text")
+            kind = {".xcassets": "folder.assetcatalog", ".swift": "sourcecode.swift", ".xcconfig": "text.xcconfig", ".plist": "text.plist.xml", ".entitlements": "text.plist.entitlements"}.get(suffix, "text")
             files[path] = add("file:" + path, "PBXFileReference", lastKnownFileType=kind, path=path, sourceTree="<group>")
         return files[path]
 
@@ -72,7 +72,8 @@ def project_model():
             source_paths += design
         source_build = [add(f"source:{name}:{p}", "PBXBuildFile", fileRef=file(p)) for p in source_paths]
         source_phase = add("sources:" + name, "PBXSourcesBuildPhase", buildActionMask=2147483647, files=source_build, runOnlyForDeploymentPostprocessing=0)
-        resource_build = [add(f"resource:{name}:{p}", "PBXBuildFile", fileRef=file(p)) for p in resources]
+        target_resources = resources + (["App/Assets.xcassets"] if name == "MyKeyboard" else [])
+        resource_build = [add(f"resource:{name}:{p}", "PBXBuildFile", fileRef=file(p)) for p in target_resources]
         resource_phase = add("resources:" + name, "PBXResourcesBuildPhase", buildActionMask=2147483647, files=resource_build, runOnlyForDeploymentPostprocessing=0)
         dependencies = [add("core-product:" + name, "XCSwiftPackageProductDependency", productName="KeyboardCore")]
         if name == "MyKeyboardExtension":
@@ -88,6 +89,8 @@ def project_model():
             "LD_RUNPATH_SEARCH_PATHS": ["$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks"],
             "OTHER_LDFLAGS": ["$(inherited)", "-lsqlite3"],
         }
+        if name == "MyKeyboard":
+            settings["ASSETCATALOG_COMPILER_APPICON_NAME"] = "AppIcon"
         if name == "StorageTests":
             settings["GENERATE_INFOPLIST_FILE"] = "YES"
         else:

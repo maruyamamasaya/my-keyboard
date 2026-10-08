@@ -236,6 +236,16 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "B2F69D92E1B9DAFF301F5AAC";
 		};
+		"4AD441DFB1033D3B6CA64FBE" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "folder.assetcatalog";
+			"path" = "App/Assets.xcassets";
+			"sourceTree" = "<group>";
+		};
+		"4FA75A814C97B675F6FAF8CD" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "4AD441DFB1033D3B6CA64FBE";
+		};
 		"4D51D425B7443DDCDA4FF1B6" = {
 			"isa" = "PBXResourcesBuildPhase";
 			"buildActionMask" = 2147483647;
@@ -243,6 +253,7 @@
 				"E5EFA7BE68B2ACCDE8896BBC",
 				"B05A0B8BFE5EF684A5A6C71B",
 				"951B2A47EEF94733565F7326",
+				"4FA75A814C97B675F6FAF8CD",
 			);
 			"runOnlyForDeploymentPostprocessing" = 0;
 		};
@@ -334,6 +345,7 @@
 					"$(inherited)",
 					"-lsqlite3",
 				);
+				"ASSETCATALOG_COMPILER_APPICON_NAME" = "AppIcon";
 				"INFOPLIST_FILE" = "Config/MyKeyboard-Info.plist";
 				"CODE_SIGN_ENTITLEMENTS" = "Config/MyKeyboard.entitlements";
 				"SWIFT_OPTIMIZATION_LEVEL" = "-Onone";
@@ -363,6 +375,7 @@
 					"$(inherited)",
 					"-lsqlite3",
 				);
+				"ASSETCATALOG_COMPILER_APPICON_NAME" = "AppIcon";
 				"INFOPLIST_FILE" = "Config/MyKeyboard-Info.plist";
 				"CODE_SIGN_ENTITLEMENTS" = "Config/MyKeyboard.entitlements";
 				"SWIFT_OPTIMIZATION_LEVEL" = "-O";
@@ -873,6 +886,7 @@
 				"392BDC3F55CEC1885F16285B",
 				"83B446D85EFBCD29F93CF075",
 				"B2F69D92E1B9DAFF301F5AAC",
+				"4AD441DFB1033D3B6CA64FBE",
 				"6CB0D67FE632784F75AD6966",
 				"F16B3CE27942356AD312E104",
 				"9D0ECA50F6481261086883F5",

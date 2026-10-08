@@ -70,7 +70,12 @@ class ProjectTests(unittest.TestCase):
     def test_files_exist_and_target_boundaries_are_correct(self):
         for obj in self.objects.values():
             if obj["isa"] == "PBXFileReference" and obj["sourceTree"] == "<group>":
-                self.assertTrue((ROOT / obj["path"]).is_file(), obj["path"])
+                path = ROOT / obj["path"]
+                if obj.get("lastKnownFileType") == "folder.assetcatalog":
+                    self.assertTrue(path.is_dir(), obj["path"])
+                    self.assertTrue((path / "Contents.json").is_file(), obj["path"])
+                else:
+                    self.assertTrue(path.is_file(), obj["path"])
         paths_by_target = {}
         for obj in self.objects.values():
             if obj["isa"] != "PBXNativeTarget": continue

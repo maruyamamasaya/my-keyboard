@@ -6,6 +6,7 @@
 - テーマ追加（iOS未検証）: Blue Cosmos標準、5プリセット、ギャラリー・色/画像編集・共通プレビュー。[UI/UX](docs/10-UI-UX-AND-THEMES.md)。
 - 設計済み: [要件](docs/02-REQUIREMENTS.md)、[構成案](docs/03-ARCHITECTURE.md)、[ロードマップ](docs/05-ROADMAP.md)。設計はアプリ実装ではない。
 - 検証済み: Python構造・テーマ配色・SQLiteスキーマ13テスト、生成設定・文書Verify。SwiftコンパイラとXcodeはない。
+- アイコン: Blue Cosmos配色の軌道・星・キーボード図案を本体のAppIconへ追加。原稿と60px、実機向けAsset Catalogコンパイルを確認。検証の詳細は [記録](sessions/2026-10-08-app-icon.md)。
 - 未実装: marked text比較、実測最適化、配布準備・CI/CD。
 - 既知の問題: 再変換/語削除は実験コードを既定無効。依存解決・Swift型検査・UIは未検証。[課題](docs/07-TESTING-AND-ISSUES.md) を参照。
 - 次に行うこと: Macで `swift test` とXcode依存解決・Debug/Releaseビルド。[Mac手順](docs/08-MAC-VALIDATION.md) を参照。
