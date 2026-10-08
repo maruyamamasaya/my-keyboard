@@ -31,7 +31,7 @@ import KeyboardCore
             return deleteSuffix(String(before.dropFirst(trimmed.count)))
         }
         let tokenizer = CFStringTokenizerCreate(nil, before as CFString,
-            CFRange(location: 0, length: before.utf16.count), kCFStringTokenizerUnitWord, CFLocaleCreate(nil, "ja_JP" as CFString))
+            CFRange(location: 0, length: before.utf16.count), kCFStringTokenizerUnitWord, CFLocaleCreate(nil, CFLocaleIdentifier(rawValue: "ja_JP" as CFString)))
         var last = CFRange(location: kCFNotFound, length: 0)
         while !CFStringTokenizerAdvanceToNextToken(tokenizer).isEmpty { last = CFStringTokenizerGetCurrentTokenRange(tokenizer) }
         guard last.location != kCFNotFound, last.location + last.length == before.utf16.count,
