@@ -82,7 +82,7 @@ import KeyboardCore
         bodyStack.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(bodyStack)
         NSLayoutConstraint.activate([
-            bodyStack.topAnchor.constraint(equalTo: view.topAnchor, constant: 16),
+            bodyStack.topAnchor.constraint(equalTo: view.topAnchor, constant: 4),
             bodyStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -4),
             bodyStack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             bodyStack.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 4),
@@ -91,12 +91,12 @@ import KeyboardCore
         widthConstraint = bodyStack.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -8)
         widthConstraint?.isActive = true
         // Keep the same header geometry before, during and after prediction.
-        let header = UIView(); headerStack.axis = .vertical; headerStack.spacing = 4
+        let header = UIView(); headerStack.axis = .vertical; headerStack.spacing = 0
         headerStack.translatesAutoresizingMaskIntoConstraints = false; header.addSubview(headerStack)
         NSLayoutConstraint.activate([
-            header.heightAnchor.constraint(equalToConstant: 96),
-            headerStack.topAnchor.constraint(equalTo: header.topAnchor, constant: 2),
-            headerStack.bottomAnchor.constraint(equalTo: header.bottomAnchor, constant: -2),
+            header.heightAnchor.constraint(equalToConstant: 88),
+            headerStack.topAnchor.constraint(equalTo: header.topAnchor, constant: 0),
+            headerStack.bottomAnchor.constraint(equalTo: header.bottomAnchor, constant: 0),
             headerStack.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: 12),
             headerStack.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -12)
         ])
@@ -109,7 +109,7 @@ import KeyboardCore
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
         header.addSubview(statusLabel)
         NSLayoutConstraint.activate([
-            statusLabel.topAnchor.constraint(equalTo: header.topAnchor, constant: 2),
+            statusLabel.topAnchor.constraint(equalTo: header.topAnchor, constant: 0),
             statusLabel.leadingAnchor.constraint(equalTo: headerStack.leadingAnchor),
             statusLabel.trailingAnchor.constraint(equalTo: headerStack.trailingAnchor),
             statusLabel.heightAnchor.constraint(equalToConstant: 44)

@@ -18,3 +18,5 @@
 - 次に行うこと: Vesperaで変更後の配置・フリック・実行キー・共有動作を検証。[Mac手順](docs/08-MAC-VALIDATION.md) を参照。
 
 構造は [ARCHITECTURE.md](ARCHITECTURE.md)、前回の結果は [sessions/](sessions/README.md) を参照。
+
+上部余白を4pt、ヘッダーを88ptへ圧縮。全体の高さ360ptは維持。[記録](sessions/2026-10-08-compact-keyboard.md)。

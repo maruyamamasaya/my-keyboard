@@ -12,10 +12,10 @@ struct KeyboardPreview: View {
     var body: some View {
         let tokens = selection.tokens
         let safe = profile.sanitized()
-        VStack(spacing: 6) {
+        VStack(spacing: 2) {
             HStack(spacing: 18) { Text("今日は"); Text("今日"); Text("きょう") }.foregroundStyle(Color(themeHex: tokens.canvasText)).font(.system(size: 14, weight: .light)).padding(6).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 12).frame(height: 44).opacity(showsCandidates ? 1 : 0).accessibilityHidden(!showsCandidates)
             GeometryReader { geometry in
-                VStack(spacing: 6) {
+                VStack(spacing: 2) {
                     HStack(spacing: 4) {
                         Text("◎　◉　✦ 履歴　　←　→　　確定　　取消").font(.caption).lineLimit(1).minimumScaleFactor(0.8)
                         Spacer(minLength: 0)
