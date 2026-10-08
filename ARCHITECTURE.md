@@ -21,7 +21,7 @@ root/          共通ルール・現在地・各分野の案内
   KeyboardExtension/ UIKit拡張・OSSアダプター
   Core/        依存なしの共有ロジック（Swift Package）
   Storage/     設定・辞書・履歴
-  DesignSystem/ 共通のキー・背景・プレビュー描画
+  DesignSystem/ 共通のUIKitフリックキー・背景・本体プレビュー描画
   Shared/      共有保存先・エラー
   Tests/       Swift単体/統合、Python構造/SQLテスト
   Config/      plist・entitlement・xcconfig

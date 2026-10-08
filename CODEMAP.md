@@ -31,8 +31,8 @@
 - Related tests: [保存統合テスト](Tests/Integration/ClipboardStoreTests.swift)、[構造・SQLテスト](Tests/Static/test_repository.py)
 
 ## テーマ・UI/UX
-- Primary paths: [トークン/選択](Core/Theme/ThemeTokens.swift)、[保存](Storage/Preferences/ThemeStore.swift)、[描画](DesignSystem/Theme/ThemeRendering.swift)、[画面](App/Theme/ThemeViews.swift)
-- Search keywords: `ThemeSelection`、`ThemeCatalog`、`applyAppearance`、`ThemeImageImporter`、`KeyboardPreview`
+- Primary paths: [トークン/選択](Core/Theme/ThemeTokens.swift)、[保存](Storage/Preferences/ThemeStore.swift)、[描画](DesignSystem/Theme/ThemeRendering.swift)、[画面](App/Theme/ThemeViews.swift)、[共通フリックキー](DesignSystem/Keyboard/FlickButton.swift)、[プレビュー](DesignSystem/Preview/KeyboardPreview.swift)
+- Search keywords: `ThemeSelection`、`ThemeCatalog`、`applyAppearance`、`ThemeImageImporter`、`KeyboardPreview`、`KeyboardGeometry`
 - Related tests: [Core](Tests/Unit/ThemeTests.swift)、[保存](Tests/Integration/ThemeStoreTests.swift)、[構造/配色](Tests/Static/test_themes.py)。設計正本は [UI/UX](docs/10-UI-UX-AND-THEMES.md)。
 
 ## Xcode設定

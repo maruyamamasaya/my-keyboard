@@ -13,7 +13,7 @@ Xcode・SwiftコンパイラはWindows環境にない。iOSアプリ全体はビ
 | 3 | cursor、space drag、repeat delete、完全一致ユーザー辞書、OSS学習・リセット | App/Dictionary、Storage、KeyboardExtension |
 | 3 | 限定再変換・語削除の実験コード（既定無効） | Core/TextEditing、DocumentProxyAdapter |
 | 4 | 縦横の高さ/幅/間隔/左右配置・テーマ・一般設定保存 | App/Settings、Core/Layout、PreferencesStore |
-| 4 | Blue Cosmos標準・5プリセット、ホーム・ギャラリー・編集・共通プレビュー、カラーのみ編集・標準キー表現固定・共有保存・押下/フリックガイド | Core/Theme、DesignSystem、App/Theme、ThemeStore |
+| 4 | Blue Cosmos標準・9プリセット、ホーム・ギャラリー・編集・共通プレビュー、カラーのみ編集・標準キー表現固定・共有保存・押下/フリックガイド | Core/Theme、DesignSystem、App/Theme、ThemeStore |
 | 5 | 本体PasteControl/拡張手動取込、確認/取消、SQLite、上限/重複/ピン/検索/削除/全削除/期限 | App/Clipboard、Storage/Clipboard、KeyboardExtension |
 | 6 | 読み長・候補数制限、debounce、変換遅延計測、memory warning、VoiceOver代替アクション、Privacy manifest案 | KeyboardExtension、Resources |
 

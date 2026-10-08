@@ -77,10 +77,14 @@ struct ThemeColorPicker: View {
 
 struct PreviewScreen: View {
     @ObservedObject var model: AppModel
+    @State private var mode: KeyboardPreviewMode = .japanese
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                KeyboardPreview(selection: model.appearance, profile: LayoutProfile(), showsCandidates: model.preferences.showsCandidates)
+                Picker("配列", selection: $mode) {
+                    ForEach(KeyboardPreviewMode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                }.pickerStyle(.segmented)
+                KeyboardPreview(selection: model.appearance, profile: LayoutProfile(), showsCandidates: model.preferences.showsCandidates, mode: mode)
                 Text("高さ・幅・フリック・変換候補の実際の動作は、iPhoneでキーボードを有効にして確認します。")
             }.padding()
         }.navigationTitle("キーボードプレビュー")

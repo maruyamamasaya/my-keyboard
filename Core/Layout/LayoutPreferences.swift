@@ -43,3 +43,13 @@ public struct KeyboardPreferences: Codable, Equatable, Sendable {
     public func profile(landscape: Bool) -> LayoutProfile { (landscape ? self.landscape : portrait).sanitized() }
     public var safeClipboardLimit: Int { min(200, max(1, clipboardLimit)) }
 }
+
+/// Shared geometry for the extension and the app's native preview.
+public enum KeyboardGeometry {
+    public static let topInset: Double = 4
+    public static let bottomInset: Double = 4
+    public static let candidateHeight: Double = 32
+    public static let toolbarHeight: Double = 36
+    public static let headerHeight = candidateHeight + toolbarHeight
+    public static let sectionSpacing: Double = 4
+}

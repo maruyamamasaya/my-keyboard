@@ -96,12 +96,12 @@ import KeyboardCore
         NotificationCenter.default.addObserver(self, selector: #selector(applyAppearance), name: UIAccessibility.reduceTransparencyStatusDidChangeNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(applyAppearance), name: UIAccessibility.darkerSystemColorsStatusDidChangeNotification, object: nil)
         NSLayoutConstraint.activate([cosmos.leadingAnchor.constraint(equalTo: view.leadingAnchor), cosmos.trailingAnchor.constraint(equalTo: view.trailingAnchor), cosmos.topAnchor.constraint(equalTo: view.topAnchor), cosmos.bottomAnchor.constraint(equalTo: view.bottomAnchor)])
-        bodyStack.axis = .vertical; bodyStack.spacing = 4
+        bodyStack.axis = .vertical; bodyStack.spacing = CGFloat(KeyboardGeometry.sectionSpacing)
         bodyStack.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(bodyStack)
         NSLayoutConstraint.activate([
-            bodyStack.topAnchor.constraint(equalTo: view.topAnchor, constant: 4),
-            bodyStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -4),
+            bodyStack.topAnchor.constraint(equalTo: view.topAnchor, constant: CGFloat(KeyboardGeometry.topInset)),
+            bodyStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -CGFloat(KeyboardGeometry.bottomInset)),
             bodyStack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             bodyStack.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 4),
             bodyStack.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -4)
@@ -112,7 +112,7 @@ import KeyboardCore
         let header = UIView(); headerStack.axis = .vertical; headerStack.spacing = 0
         headerStack.translatesAutoresizingMaskIntoConstraints = false; header.addSubview(headerStack)
         NSLayoutConstraint.activate([
-            header.heightAnchor.constraint(equalToConstant: 68),
+            header.heightAnchor.constraint(equalToConstant: CGFloat(KeyboardGeometry.headerHeight)),
             headerStack.topAnchor.constraint(equalTo: header.topAnchor, constant: 0),
             headerStack.bottomAnchor.constraint(equalTo: header.bottomAnchor, constant: 0),
             headerStack.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: 12),
@@ -130,7 +130,7 @@ import KeyboardCore
             statusLabel.topAnchor.constraint(equalTo: header.topAnchor, constant: 0),
             statusLabel.leadingAnchor.constraint(equalTo: headerStack.leadingAnchor),
             statusLabel.trailingAnchor.constraint(equalTo: headerStack.trailingAnchor),
-            statusLabel.heightAnchor.constraint(equalToConstant: 32)
+            statusLabel.heightAnchor.constraint(equalToConstant: CGFloat(KeyboardGeometry.candidateHeight))
         ])
         let candidateScroll = UIScrollView(); candidateScroll.showsHorizontalScrollIndicator = false
         candidateRow.axis = .horizontal; candidateRow.spacing = 6; candidateRow.translatesAutoresizingMaskIntoConstraints = false
@@ -141,7 +141,7 @@ import KeyboardCore
             candidateRow.topAnchor.constraint(equalTo: candidateScroll.contentLayoutGuide.topAnchor),
             candidateRow.bottomAnchor.constraint(equalTo: candidateScroll.contentLayoutGuide.bottomAnchor),
             candidateRow.heightAnchor.constraint(equalTo: candidateScroll.frameLayoutGuide.heightAnchor),
-            candidateScroll.heightAnchor.constraint(equalToConstant: 32)
+            candidateScroll.heightAnchor.constraint(equalToConstant: CGFloat(KeyboardGeometry.candidateHeight))
         ])
         headerStack.addArrangedSubview(candidateScroll)
         grid.axis = .horizontal; grid.distribution = .fill; grid.spacing = 5
@@ -153,7 +153,7 @@ import KeyboardCore
         NSLayoutConstraint.activate([
             toolbar.leadingAnchor.constraint(equalTo: toolbarScroll.contentLayoutGuide.leadingAnchor), toolbar.trailingAnchor.constraint(equalTo: toolbarScroll.contentLayoutGuide.trailingAnchor),
             toolbar.topAnchor.constraint(equalTo: toolbarScroll.contentLayoutGuide.topAnchor), toolbar.bottomAnchor.constraint(equalTo: toolbarScroll.contentLayoutGuide.bottomAnchor),
-            toolbar.heightAnchor.constraint(equalTo: toolbarScroll.frameLayoutGuide.heightAnchor), toolbarScroll.heightAnchor.constraint(equalToConstant: 36)
+            toolbar.heightAnchor.constraint(equalTo: toolbarScroll.frameLayoutGuide.heightAnchor), toolbarScroll.heightAnchor.constraint(equalToConstant: CGFloat(KeyboardGeometry.toolbarHeight))
         ])
         let visibility = button("候補表示", role: .toolbar) { [weak self] in
             guard let self else { return }; self.showsCandidates.toggle(); self.render()

@@ -2,6 +2,19 @@ import XCTest
 @testable import KeyboardCore
 
 final class ThemeTests: XCTestCase {
+    func testWindowsThemesRetainPresetShapeWithCustomColors() {
+        let presets = ThemeCatalog.presets.filter { $0.id.hasPrefix("windows-") }
+        XCTAssertEqual(presets.count, 4)
+        for preset in presets {
+            var selection = ThemeSelection(); selection.presetID = preset.id
+            XCTAssertEqual(selection.tokens.cornerRadius, preset.tokens.cornerRadius)
+            XCTAssertFalse(selection.tokens.stars)
+            var custom = preset.tokens; custom.cornerRadius = 20; custom.background = "#000000"
+            selection.custom = custom
+            XCTAssertEqual(selection.tokens.cornerRadius, preset.tokens.cornerRadius)
+            XCTAssertEqual(selection.tokens.background, "#000000")
+        }
+    }
     func testDefaultMigrationAndUnknownPreset() {
         XCTAssertEqual(ThemeSelection().presetID, "blue-cosmos")
         XCTAssertEqual(ThemeSelection.migrating(.system).presetID, "blue-cosmos")

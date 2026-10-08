@@ -82,7 +82,16 @@ public enum ThemeCatalog {
         .init(id: "minimal-light", name: "Minimal Light", tokens: .init(background: "#E8EDF3", key: "#FFFFFF", text: "#152238", accent: "#2258A0", dark: false)),
         .init(id: "minimal-dark", name: "Minimal Dark", tokens: .init(background: "#14171D", key: "#2C323C", text: "#F4F6FA", accent: "#B9D5FF")),
         .init(id: "living-aurora", name: "Living Aurora", tokens: .init(background: "#101E25", key: "#243C43", text: "#F0FBFA", accent: "#A1E5D2")),
-        .init(id: "pulse-neon", name: "Pulse Neon", tokens: .init(background: "#191329", key: "#332745", text: "#FCF2FF", accent: "#E6B0FF"))]
+        .init(id: "pulse-neon", name: "Pulse Neon", tokens: .init(background: "#191329", key: "#332745", text: "#FCF2FF", accent: "#E6B0FF")),
+        windows("windows-98", "Windows 98", background: "#008080", key: "#C0C0C0", text: "#181818", accent: "#000080", corner: 2, dark: false),
+        windows("windows-xp", "Windows XP", background: "#245EDC", key: "#ECE9D8", text: "#182334", accent: "#2E751A", corner: 6, dark: false),
+        windows("windows-vista", "Windows Vista", background: "#102B35", key: "#305560", text: "#E9F6FC", accent: "#8CD8ED", corner: 9, dark: true),
+        windows("windows-7", "Windows 7", background: "#163A5F", key: "#C9E7F4", text: "#152B44", accent: "#307FA8", corner: 7, dark: true)]
+    private static func windows(_ id: String, _ name: String, background: String, key: String, text: String, accent: String, corner: Double, dark: Bool) -> ThemePreset {
+        var tokens = ThemeTokens(background: background, key: key, text: text, accent: accent, dark: dark)
+        tokens.cornerRadius = corner; tokens.opacity = 1; tokens.borderWidth = 1.2; tokens.shadowOpacity = 0.2
+        return .init(id: id, name: name, tokens: tokens)
+    }
     public static func preset(_ id: String) -> ThemePreset { presets.first { $0.id == id } ?? blueCosmos }
 }
 
@@ -95,7 +104,7 @@ public struct ThemeSelection: Codable, Equatable, Sendable {
     public init() {}
     public var tokens: ThemeTokens {
         var value = custom ?? ThemeCatalog.preset(presetID).tokens
-        let fixed = ThemeCatalog.blueCosmos.tokens
+        let fixed = presetID.hasPrefix("windows-") ? ThemeCatalog.preset(presetID).tokens : ThemeCatalog.blueCosmos.tokens
         value.cornerRadius = fixed.cornerRadius; value.opacity = fixed.opacity
         value.borderWidth = fixed.borderWidth; value.shadowOpacity = fixed.shadowOpacity
         value.stars = fixed.stars; value.dark = fixed.dark

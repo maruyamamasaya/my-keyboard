@@ -1,86 +1,118 @@
 import SwiftUI
+import UIKit
 import KeyboardCore
 
-/// A visual sample, not a host-input or conversion simulator.
+enum KeyboardPreviewMode: String, CaseIterable { case japanese = "かな", english = "ABC", symbols = "記号" }
+
+/// Uses the same native controls and geometry as the extension; never edits host text.
 struct KeyboardPreview: View {
     let selection: ThemeSelection
     var profile = LayoutProfile()
     var image: UIImage? = nil
     var showsCandidates = true
-    @Environment(\.colorSchemeContrast) private var contrast
-    @Environment(\.accessibilityReduceTransparency) private var solid
+    var mode: KeyboardPreviewMode = .japanese
     var body: some View {
-        let tokens = selection.tokens
-        let safe = profile.sanitized()
-        VStack(spacing: 2) {
-            HStack(spacing: 18) { Text("今日は"); Text("今日"); Text("きょう") }.foregroundStyle(Color(themeHex: tokens.canvasText)).font(.system(size: 14, weight: .light)).padding(6).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 12).frame(height: 32).opacity(showsCandidates ? 1 : 0).accessibilityHidden(!showsCandidates)
-            GeometryReader { geometry in
-                VStack(spacing: 2) {
-                    HStack(spacing: 4) {
-                        Text("◎　◉　✦ 履歴　　←　→　　確定　　取消").font(.caption).lineLimit(1).minimumScaleFactor(0.8)
-                        Spacer(minLength: 0)
-                        Image(systemName: "chevron.down").frame(width: 32, height: 32)
-                    }.frame(height: 32)
-                    HStack(spacing: safe.spacing) {
-                        VStack(spacing: safe.spacing) {
-                            ForEach(["記号", "123", "あA", "☺"], id: \.self) { key($0, tokens: tokens, utility: true) }
-                        }.frame(width: (geometry.size.width * safe.widthFraction - safe.spacing * 4) / 5)
-                        VStack(spacing: safe.spacing) {
-                            ForEach(0..<4, id: \.self) { row in
-                                HStack(spacing: safe.spacing) {
-                                    ForEach(0..<3, id: \.self) { column in
-                                        key(FlickMap.japanese[row * 3 + column].label, tokens: tokens)
-                                    }
-                                }
-                            }
-                        }
-                        GeometryReader { side in
-                            let height = (side.size.height - safe.spacing * 3) / 4
-                            VStack(spacing: safe.spacing) {
-                                key("⌫", tokens: tokens, utility: true).frame(height: height)
-                                key("空白", tokens: tokens, utility: true).frame(height: height)
-                                key("改行\n↵", tokens: tokens, accent: true).frame(height: height * 2 + safe.spacing)
-                            }
-                        }.frame(width: (geometry.size.width * safe.widthFraction - safe.spacing * 4) / 5)
-                    }
-                }.frame(width: geometry.size.width * safe.widthFraction, height: geometry.size.height)
-                    .frame(maxWidth: .infinity, alignment: safe.alignment == .left ? .leading : safe.alignment == .right ? .trailing : .center)
-            }.frame(height: safe.height - 110)
-            Text("見た目のサンプル・入力操作は実機で確認").font(.caption2).foregroundStyle(Color(themeHex: tokens.canvasText))
-        }.padding(.horizontal, 10).padding(.top, 22).padding(.bottom, 10).foregroundStyle(Color(themeHex: tokens.text))
-            .background(CosmosBackground(tokens: tokens, image: image)).clipShape(RoundedRectangle(cornerRadius: 16))
-            .accessibilityElement(children: .combine).accessibilityLabel("キーボードの外観プレビュー")
+        NativeKeyboardPreview(tokens: selection.tokens, showsCandidates: showsCandidates, mode: mode)
+            .frame(height: profile.sanitized().height)
+            .accessibilityLabel("キーボードの外観プレビュー")
     }
-    private func key(_ title: String, tokens: ThemeTokens, accent: Bool = false, utility: Bool = false) -> some View {
-        var surface = tokens
-        if utility { surface.key = tokens.background; surface.opacity = 1; surface = surface.readable }
-        if accent { surface.key = tokens.accent == ThemeCatalog.blueCosmos.tokens.accent ? "#176BFF" : tokens.accent; surface.text = "#FFFFFF"; surface.opacity = 1; surface = surface.readable }
-        return Text(title).font(.system(size: accent ? 18 : utility ? 14 : 20, weight: .light))
-            .multilineTextAlignment(.center)
-            .foregroundStyle(Color(themeHex: surface.text))
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(themeHex: surface.key).opacity(solid || contrast == .increased || image != nil ? 1 : surface.opacity))
-            .overlay { if accent && !solid && contrast != .increased { LinearGradient(colors: [.white.opacity(0.22), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).allowsHitTesting(false) } }
-            .overlay {
-                if !utility && !accent && !solid && contrast != .increased {
-                    LinearGradient(colors: [.white.opacity(0.16), .clear, .black.opacity(0.20)], startPoint: .top, endPoint: .bottom).allowsHitTesting(false)
-                }
-            }
-            .overlay {
-                if !utility && !accent {
-                    GeometryReader { geometry in
-                        let letters = FlickMap.japanese.first { $0.label == title }?.characters ?? []
-                        ForEach(1..<min(5, max(1, letters.count)), id: \.self) { index in
-                            Text(letters[index]).font(.system(size: 9, weight: .regular)).opacity(0.45)
-                                .position(x: index == 1 ? 11 : index == 3 ? geometry.size.width - 11 : geometry.size.width / 2,
-                                          y: index == 2 ? 9 : index == 4 ? geometry.size.height - 9 : geometry.size.height / 2)
-                        }
-                    }.allowsHitTesting(false).accessibilityHidden(true)
-                }
-            }
-            .clipShape(RoundedRectangle(cornerRadius: surface.cornerRadius))
-            .overlay(RoundedRectangle(cornerRadius: surface.cornerRadius).stroke(Color(themeHex: surface.stars ? surface.accent : surface.text).opacity(contrast == .increased ? 1 : 0.35), lineWidth: contrast == .increased ? max(2, surface.borderWidth) : surface.borderWidth))
-            .shadow(color: accent && !solid && contrast != .increased ? Color(themeHex: tokens.accent).opacity(0.3) : .clear, radius: 8, y: 4)
-    }
+}
 
+private struct NativeKeyboardPreview: UIViewRepresentable {
+    let tokens: ThemeTokens
+    let showsCandidates: Bool
+    let mode: KeyboardPreviewMode
+    func makeUIView(context: Context) -> PreviewKeyboardView { PreviewKeyboardView() }
+    func updateUIView(_ view: PreviewKeyboardView, context: Context) { view.update(tokens: tokens, showsCandidates: showsCandidates, mode: mode) }
+}
+
+private final class PreviewKeyboardView: UIView {
+    private let background = CosmosBackgroundView(frame: .zero)
+    private let body = UIStackView()
+    func update(tokens: ThemeTokens, showsCandidates: Bool, mode: KeyboardPreviewMode) {
+        background.tokens = tokens
+        backgroundColor = UIColor(themeHex: tokens.background)
+        body.arrangedSubviews.forEach { body.removeArrangedSubview($0); $0.removeFromSuperview() }
+        let strong = UIAccessibility.isReduceTransparencyEnabled || traitCollection.accessibilityContrast == .high
+        func action(_ title: String, role: KeyboardKeyRole = .utility, symbol: String? = nil) -> KeyboardActionButton {
+            let key = KeyboardActionButton(frame: .zero); key.keyRole = role; key.accessibilityLabel = title
+            if let symbol { key.setImage(UIImage(systemName: symbol), for: .normal) }
+            else { key.setTitle(title, for: .normal) }
+            key.titleLabel?.numberOfLines = 2
+            key.isUserInteractionEnabled = false
+            KeyboardKeyStyle.apply(key, tokens: tokens, strong: strong)
+            return key
+        }
+        func scroll(_ stack: UIStackView, height: Double) -> UIScrollView {
+            let scroll = UIScrollView(); scroll.showsHorizontalScrollIndicator = false
+            stack.translatesAutoresizingMaskIntoConstraints = false; scroll.addSubview(stack)
+            NSLayoutConstraint.activate([
+                stack.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor), stack.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor),
+                stack.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor), stack.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor),
+                stack.heightAnchor.constraint(equalTo: scroll.frameLayoutGuide.heightAnchor), scroll.heightAnchor.constraint(equalToConstant: height)
+            ])
+            return scroll
+        }
+        let header = UIStackView(); header.axis = .vertical
+        header.isLayoutMarginsRelativeArrangement = true; header.layoutMargins = UIEdgeInsets(top: 0, left: 12, bottom: 0, right: 12)
+        let candidates = UIStackView(); candidates.spacing = 6
+        if showsCandidates && mode == .japanese {
+            for text in ["今日は", "今日", "きょう", "京都"] {
+                let key = action(text, role: .candidate); key.titleLabel?.numberOfLines = 1
+                key.contentEdgeInsets = UIEdgeInsets(top: 5, left: 8, bottom: 5, right: 8)
+                key.setContentCompressionResistancePriority(.required, for: .horizontal)
+                candidates.addArrangedSubview(key)
+            }
+        }
+        header.addArrangedSubview(scroll(candidates, height: KeyboardGeometry.candidateHeight))
+        let toolbar = UIStackView(); toolbar.spacing = 4
+        for (title, symbol) in [("候補", showsCandidates ? "eye" : "eye.slash"), ("あA", "textformat"), ("履歴", "doc.on.clipboard"), ("左", "chevron.left"), ("右", "chevron.right"), ("確定", "checkmark.circle"), ("取消", "arrow.uturn.backward"), ("再変換", "arrow.triangle.2.circlepath"), ("単語削除", "delete.left.fill")] {
+            let key = action(title, role: .toolbar, symbol: title == "あA" ? nil : symbol); key.widthAnchor.constraint(equalToConstant: 44).isActive = true; toolbar.addArrangedSubview(key)
+        }
+        let tools = UIStackView(); tools.spacing = 4
+        tools.addArrangedSubview(scroll(toolbar, height: KeyboardGeometry.toolbarHeight))
+        let close = action("キーボードを閉じる", role: .toolbar, symbol: "chevron.down")
+        close.widthAnchor.constraint(equalToConstant: 44).isActive = true; tools.addArrangedSubview(close)
+        header.addArrangedSubview(tools); body.addArrangedSubview(header)
+        let spacing = CGFloat(LayoutProfile().spacing)
+        func column() -> UIStackView { let stack = UIStackView(); stack.axis = .vertical; stack.spacing = spacing; stack.distribution = .fillEqually; return stack }
+        let grid = UIStackView(); grid.spacing = spacing
+        let left = column(), center = column(), right = column()
+        grid.addArrangedSubview(left); grid.addArrangedSubview(center); grid.addArrangedSubview(right)
+        NSLayoutConstraint.activate([left.widthAnchor.constraint(equalTo: right.widthAnchor), center.widthAnchor.constraint(equalTo: left.widthAnchor, multiplier: 3, constant: spacing * 2)])
+        if mode == .english {
+            left.distribution = .fill
+            let cursor = action("→"), cancel = action("取消", symbol: "arrow.uturn.backward"), symbols = action("☆123")
+            left.addArrangedSubview(cursor); left.addArrangedSubview(cancel); left.addArrangedSubview(symbols)
+            NSLayoutConstraint.activate([cursor.heightAnchor.constraint(equalTo: cancel.heightAnchor), symbols.heightAnchor.constraint(equalTo: cursor.heightAnchor, multiplier: 2, constant: spacing)])
+        } else {
+            for title in ["記号", "123", "あA", "☺"] { left.addArrangedSubview(action(title, symbol: title == "☺" ? "face.smiling" : nil)) }
+        }
+        let keys = mode == .english ? FlickMap.english(uppercase: false) : mode == .symbols ? FlickMap.engineeringSymbols : FlickMap.japanese
+        for rowIndex in 0..<4 {
+            let row = UIStackView(); row.spacing = spacing; row.distribution = .fillEqually
+            for key in keys[(rowIndex * 3)..<(rowIndex * 3 + 3)] {
+                let view = FlickButton(key: key, typography: mode == .english ? .latin : mode == .symbols ? .code : .kana)
+                view.applyTheme(tokens, strong: strong); view.isUserInteractionEnabled = false; row.addArrangedSubview(view)
+            }
+            center.addArrangedSubview(row)
+        }
+        right.distribution = .fill
+        let delete = action("削除", symbol: "delete.left"), space = action("空白"), enter = action("改行\n↵", role: .primary)
+        right.addArrangedSubview(delete); right.addArrangedSubview(space); right.addArrangedSubview(enter)
+        NSLayoutConstraint.activate([delete.heightAnchor.constraint(equalTo: space.heightAnchor), enter.heightAnchor.constraint(equalTo: delete.heightAnchor, multiplier: 2, constant: spacing)])
+        body.addArrangedSubview(grid)
+    }
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        background.translatesAutoresizingMaskIntoConstraints = false; addSubview(background)
+        body.axis = .vertical; body.spacing = KeyboardGeometry.sectionSpacing
+        body.translatesAutoresizingMaskIntoConstraints = false; addSubview(body)
+        NSLayoutConstraint.activate([
+            background.leadingAnchor.constraint(equalTo: leadingAnchor), background.trailingAnchor.constraint(equalTo: trailingAnchor), background.topAnchor.constraint(equalTo: topAnchor), background.bottomAnchor.constraint(equalTo: bottomAnchor),
+            body.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 4), body.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -4),
+            body.topAnchor.constraint(equalTo: topAnchor, constant: KeyboardGeometry.topInset), body.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -KeyboardGeometry.bottomInset)
+        ])
+    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 }
