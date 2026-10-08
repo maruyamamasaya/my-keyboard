@@ -1,7 +1,7 @@
-// Replace these identifiers and team on Mac before device installation.
-APP_BUNDLE_IDENTIFIER = org.example.mykeyboard
-APP_GROUP_IDENTIFIER = group.org.example.mykeyboard
-DEVELOPMENT_TEAM =
+// Dedicated identifiers for the existing Apple development team.
+APP_BUNDLE_IDENTIFIER = maruyama.MyKeyboard
+APP_GROUP_IDENTIFIER = group.maruyama.MyKeyboard
+DEVELOPMENT_TEAM = U29GY347DY
 IPHONEOS_DEPLOYMENT_TARGET = 17.0
 SWIFT_VERSION = 5.0
 CODE_SIGN_STYLE = Automatic

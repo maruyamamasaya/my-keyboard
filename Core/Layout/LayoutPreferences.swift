@@ -3,28 +3,43 @@ import Foundation
 public enum KeyboardAlignment: String, Codable, CaseIterable, Sendable { case left, center, right }
 public enum KeyboardTheme: String, Codable, CaseIterable, Sendable { case system, light, dark }
 public struct LayoutProfile: Codable, Equatable, Sendable {
-    public var height: Double = 340
+    public var height: Double = 360
     public var widthFraction: Double = 1
-    public var spacing: Double = 5
+    public var spacing: Double = 3
     public var alignment: KeyboardAlignment = .center
     public init() {}
     public func sanitized() -> Self {
-        var copy = self
-        copy.height = height.isFinite ? min(420, max(320, height)) : 340
-        copy.widthFraction = widthFraction.isFinite ? min(1, max(0.7, widthFraction)) : 1
-        copy.spacing = spacing.isFinite ? min(12, max(0, spacing)) : 5
-        return copy
+        // Retain stored fields for decoding old preferences; presentation is fixed.
+        Self()
     }
 }
 public struct KeyboardPreferences: Codable, Equatable, Sendable {
     public var portrait = LayoutProfile()
     public var landscape = LayoutProfile()
     public var theme: KeyboardTheme = .system
+    public var showsCandidates = true
+    private var candidateVisibilityVersion = 2
     public var learningEnabled = false
     public var learningResetID = UUID()
     public var clipboardEnabled = false
     public var clipboardLimit = 50
     public init() {}
+    private enum CodingKeys: String, CodingKey {
+        case portrait, landscape, theme, showsCandidates, candidateVisibilityVersion, learningEnabled, learningResetID, clipboardEnabled, clipboardLimit
+    }
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        portrait = try values.decodeIfPresent(LayoutProfile.self, forKey: .portrait) ?? .init()
+        landscape = try values.decodeIfPresent(LayoutProfile.self, forKey: .landscape) ?? .init()
+        theme = try values.decodeIfPresent(KeyboardTheme.self, forKey: .theme) ?? .system
+        // Reset the previous hidden default once; preserve explicit choices after migration.
+        let visibilityVersion = try values.decodeIfPresent(Int.self, forKey: .candidateVisibilityVersion) ?? 1
+        showsCandidates = visibilityVersion >= 2 ? (try values.decodeIfPresent(Bool.self, forKey: .showsCandidates) ?? true) : true
+        learningEnabled = try values.decodeIfPresent(Bool.self, forKey: .learningEnabled) ?? false
+        learningResetID = try values.decodeIfPresent(UUID.self, forKey: .learningResetID) ?? UUID()
+        clipboardEnabled = try values.decodeIfPresent(Bool.self, forKey: .clipboardEnabled) ?? false
+        clipboardLimit = try values.decodeIfPresent(Int.self, forKey: .clipboardLimit) ?? 50
+    }
     public func profile(landscape: Bool) -> LayoutProfile { (landscape ? self.landscape : portrait).sanitized() }
     public var safeClipboardLimit: Int { min(200, max(1, clipboardLimit)) }
 }

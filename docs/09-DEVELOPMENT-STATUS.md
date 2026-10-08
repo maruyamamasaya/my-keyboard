@@ -13,7 +13,7 @@ Xcode・SwiftコンパイラはWindows環境にない。iOSアプリ全体はビ
 | 3 | cursor、space drag、repeat delete、完全一致ユーザー辞書、OSS学習・リセット | App/Dictionary、Storage、KeyboardExtension |
 | 3 | 限定再変換・語削除の実験コード（既定無効） | Core/TextEditing、DocumentProxyAdapter |
 | 4 | 縦横の高さ/幅/間隔/左右配置・テーマ・一般設定保存 | App/Settings、Core/Layout、PreferencesStore |
-| 4 | Blue Cosmos標準・5プリセット、ホーム・ギャラリー・編集・共通プレビュー、色/画像/キー表現・共有保存・押下/フリックガイド | Core/Theme、DesignSystem、App/Theme、ThemeStore |
+| 4 | Blue Cosmos標準・5プリセット、ホーム・ギャラリー・編集・共通プレビュー、カラーのみ編集・標準キー表現固定・共有保存・押下/フリックガイド | Core/Theme、DesignSystem、App/Theme、ThemeStore |
 | 5 | 本体PasteControl/拡張手動取込、確認/取消、SQLite、上限/重複/ピン/検索/削除/全削除/期限 | App/Clipboard、Storage/Clipboard、KeyboardExtension |
 | 6 | 読み長・候補数制限、debounce、変換遅延計測、memory warning、VoiceOver代替アクション、Privacy manifest案 | KeyboardExtension、Resources |
 
@@ -34,7 +34,7 @@ Xcode・SwiftコンパイラはWindows環境にない。iOSアプリ全体はビ
 メインスレッドの変換負荷、回転と最小キー領域、ホスト変更通知、辞書資源のSPM同梱をMacで確認する。
 保存の最大件数はピンを含み、全ピンなら新規項目を拒否。設定で上限を減らしてもピンを自動削除しない。
 
-テーマのSwiftUI/UIKit表示・画像処理・共有反映・アクセシビリティ・性能も未検証（T-020〜023）。カスタム設定は1組。複数名付きカスタムテーマは未実装。
+テーマのSimulator表示は確認済み。実機の共有反映・アクセシビリティ・性能は未検証（T-020〜023）。画像編集UIは撤去。カスタム設定は1組。複数名付きカスタムテーマは未実装。
 
 ## 次の開始地点
 1. [Mac手順](08-MAC-VALIDATION.md) に従いT-001（Swift型検査・Debug/Releaseビルド）とT-004（Coreテスト）を最初に実施する。

@@ -36,7 +36,7 @@ flowchart TD
 - 状態は idle / composing / candidates / committing を基本とし、読み、候補、カーソル、文書識別子、revisionを保持する。
 - UIとDocumentProxyはメインスレッドで扱う。変換器の並行利用可否を確認し、候補計算は直列化して古い結果を破棄する。
 - 変換アダプターがOSSのComposingText等を包み、UI側へOSS固有型を広げない。
-- 初期実装は拡張内の未確定表示＋確定時挿入方式。marked text比較は実機環境で別途行う。既存ホストへ未検証の未確定範囲操作を先に組み込まない。
+- 入力先へmarked textで先頭候補を更新するライブ変換。LiveTextSessionがdocument IDと更新後の文脈を照合し、外部変更時は所有権を放棄する。確定・取消は所有中の未確定領域だけを操作する。[判断](../decisions/0005-live-conversion-fixed-presentation.md)。
 - 選択・文書・前後文脈が変わったら直前確定の再変換資格を失効させる。文字数の推測による無条件な削除はしない。
 - スペースドラッグと文字挿入の競合、連続削除タイマーの取消を入力イベントとして管理する。
 

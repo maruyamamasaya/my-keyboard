@@ -29,7 +29,7 @@ import KeyboardCore
             preferencesStore = store
             preferences = store.load()
             appearance = (try? ThemeStore())?.load(legacy: preferences.theme) ?? .init()
-            if let data = (try? ThemeStore())?.imageData(appearance) { themeImage = ThemeImageRendering.image(data) }
+            themeImage = nil
             try store.save(preferences)
             dictionary = try UserDictionaryStore().load()
         } catch { message = error.localizedDescription }
@@ -38,10 +38,10 @@ import KeyboardCore
         do {
             let store = try ThemeStore()
             var next = selection
-            if let imageData { next.imageName = try store.saveImage(imageData) }
+            next.imageName = nil
             try store.save(next)
             appearance = next
-            themeImage = store.imageData(next).flatMap { ThemeImageRendering.image($0) }
+            themeImage = nil
             return true
         } catch { message = error.localizedDescription; return false }
     }

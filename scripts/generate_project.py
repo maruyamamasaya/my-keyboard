@@ -70,14 +70,16 @@ def project_model():
         source_paths = sorted(str(p.relative_to(ROOT)).replace("\\", "/") for p in (ROOT / folder).rglob("*.swift")) + shared
         if name != "StorageTests":
             source_paths += design
+        else:
+            source_paths += ["KeyboardExtension/Input/AzooKeyConversion.swift"]
         source_build = [add(f"source:{name}:{p}", "PBXBuildFile", fileRef=file(p)) for p in source_paths]
         source_phase = add("sources:" + name, "PBXSourcesBuildPhase", buildActionMask=2147483647, files=source_build, runOnlyForDeploymentPostprocessing=0)
         target_resources = resources + (["App/Assets.xcassets"] if name == "MyKeyboard" else [])
         resource_build = [add(f"resource:{name}:{p}", "PBXBuildFile", fileRef=file(p)) for p in target_resources]
         resource_phase = add("resources:" + name, "PBXResourcesBuildPhase", buildActionMask=2147483647, files=resource_build, runOnlyForDeploymentPostprocessing=0)
         dependencies = [add("core-product:" + name, "XCSwiftPackageProductDependency", productName="KeyboardCore")]
-        if name == "MyKeyboardExtension":
-            dependencies.append(add("converter-product", "XCSwiftPackageProductDependency", package=remote_package, productName="KanaKanjiConverterModuleWithDefaultDictionary"))
+        if name in ("MyKeyboardExtension", "StorageTests"):
+            dependencies.append(add("converter-product:" + name, "XCSwiftPackageProductDependency", package=remote_package, productName="KanaKanjiConverterModuleWithDefaultDictionary"))
         framework_build = [add(f"framework:{name}:{dependency}", "PBXBuildFile", productRef=dependency) for dependency in dependencies]
         framework_phase = add("frameworks:" + name, "PBXFrameworksBuildPhase", buildActionMask=2147483647, files=framework_build, runOnlyForDeploymentPostprocessing=0)
         product = add("product:" + name, "PBXFileReference", explicitFileType=file_type, includeInIndex=0, path=product_name, sourceTree="BUILT_PRODUCTS_DIR")

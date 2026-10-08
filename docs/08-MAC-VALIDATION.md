@@ -43,7 +43,9 @@ xcodebuild -project MyKeyboard.xcodeproj -scheme MyKeyboard -configuration Relea
 # Replace SIMULATOR_UDID with an actual value from simctl.
 xcodebuild -project MyKeyboard.xcodeproj -scheme MyKeyboard -destination 'platform=iOS Simulator,id=SIMULATOR_UDID' CODE_SIGNING_ALLOWED=NO test
 ```
-`swift test` は共通ロジック・テーマの12テスト。schemeのStorageTestsはSQLite Swiftラッパー・テーマ保存の5テスト。Pythonテストはこれらを代替しない。
+Apple SiliconのSimulatorでx86_64リンク失敗が出る場合は、上のtestに `ONLY_ACTIVE_ARCH=YES ARCHS=arm64` を追加して検証する。
+
+`swift test` は共通ロジック・テーマ・ライブ変換・単語再変換の20テスト。schemeのStorageTestsはSQLite Swiftラッパー・テーマ保存・UIKit marked textの10テスト。Pythonテストはこれらを代替しない。
 テストbundleのschema.sql存在を確認。Resources/PrivacyInfo.xcprivacy、ThirdPartyNotices.txtが本体と拡張に含まれることも確認する。
 ビルドエラーはT-001等へ記録し、修正後に同じ構成で再実行する。
 
@@ -57,14 +59,14 @@ Xcodeで本体schemeと接続したiPhoneを選びRun。必要なら端末のDev
 - 「あいうえお」「がっこう」「きょうはいいてんき」を各方向のflickと濁点/小書きで入力。候補→確定・取消・かな/カタカナを確認。
 - ABCのフリック、⇧、数字、記号、空白、改行、地球キーを確認。toolbarは横スクロール可能。
 - 本体の入力テスト画面、メモ、Safari等でUITextField/TextView/Web欄の互換性を比較。
-- 未確定読みは拡張内に表示し、確定時だけホストへ挿入する。カーソル移動は未確定中なら読み内、それ以外はホストを移動する。
+- ライブ変換の更新・確定・取消、候補既定非表示・目アイコン切替を確認する。再変換→左右で単語選択→候補タップ→Enterで全体確定し、周囲の本文と他の単語が保たれることを確認する。
 - ⌫長押し→離指→別ホストで削除が止まる。スペースdrag後に余計な空白が入らない。
 - 本体で単語を追加/編集/削除し、拡張を開き直して完全一致読みの候補を確認。学習ON/OFFとリセットを試す。
 - 再変換・語削除は既定無効。非個人情報の試験環境でのみ `Config/MyKeyboardExtension-Info.plist` のEnableExperimentalHostReplacementを一時trueへ変更し、T-009を実施する。生成スクリプトの再実行はfalseへ戻す。
 - 部分削除が生じる場合は不具合として記録し、無効のまま正式操作の方式を再設計する。
 
 ## 7. レイアウト・アクセシビリティ
-本体で縦横それぞれ高さ320〜420、幅70〜100%、間隔0〜12、左右配置・themeを変更する。
+縦横とも高さ360・幅100%・間隔3の固定配置を確認し、カラーを変更する。
 回転・再起動・共有設定読取失敗を確認。ホスト制約で実高さが指定値と異なる可能性を評価する。
 最小キー高さ・制約warning・safe area・画面外表示を測定。VoiceOverのカスタムアクションで各かなを選べるか、候補全文が読めるか確認する。
 

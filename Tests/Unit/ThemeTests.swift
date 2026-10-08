@@ -23,10 +23,20 @@ final class ThemeTests: XCTestCase {
         tokens.background = "url(remote)"; tokens.cornerRadius = .infinity; tokens.opacity = .nan
         tokens.key = "#FFFFFF"; tokens.text = "#FFFFFF"
         let safe = tokens.readable
-        XCTAssertEqual(safe.background, "#081426"); XCTAssertEqual(safe.cornerRadius, 10)
+        XCTAssertEqual(safe.background, ThemeCatalog.blueCosmos.tokens.background); XCTAssertEqual(safe.cornerRadius, 10)
         XCTAssertEqual(safe.opacity, 1); XCTAssertEqual(safe.text, "#000000")
         tokens.key = "#000000"; tokens.background = "#FFFFFF"; tokens.opacity = 0.65; tokens.text = "#000000"
         XCTAssertEqual(tokens.readable.text, "#FFFFFF"); XCTAssertEqual(tokens.readable.opacity, 1)
+    }
+    func testKeyExpressionIsFixedWhileColorsRemainEditable() {
+        var selection = ThemeSelection()
+        var custom = ThemeCatalog.blueCosmos.tokens
+        custom.cornerRadius = 0; custom.shadowOpacity = 0; custom.stars = false
+        custom.accent = "#FF99CC"; selection.custom = custom
+        XCTAssertEqual(selection.tokens.cornerRadius, ThemeCatalog.blueCosmos.tokens.cornerRadius)
+        XCTAssertEqual(selection.tokens.shadowOpacity, ThemeCatalog.blueCosmos.tokens.shadowOpacity)
+        XCTAssertTrue(selection.tokens.stars)
+        XCTAssertEqual(selection.tokens.accent, "#FF99CC")
     }
     func testImageReferencesCannotEscapeStorage() {
         var selection = ThemeSelection()

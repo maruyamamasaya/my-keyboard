@@ -10,24 +10,29 @@ final class FlickButton: UIControl {
     private var tokens = ThemeCatalog.blueCosmos.tokens
     private var strong = false
     private var guides: [UILabel] = []
+    private let relief = CAGradientLayer()
     func applyTheme(_ tokens: ThemeTokens, strong: Bool) {
         self.tokens = tokens; self.strong = strong
         title.textColor = UIColor(themeHex: tokens.text)
         KeyboardKeyStyle.apply(self, tokens: tokens, strong: strong)
-        for label in guides { label.textColor = UIColor(themeHex: tokens.text) }
+        relief.isHidden = strong
+        relief.colors = [UIColor.white.withAlphaComponent(0.16).cgColor, UIColor.clear.cgColor, UIColor.black.withAlphaComponent(0.20).cgColor]
+        relief.locations = [0, 0.45, 1]
+        for label in guides { label.textColor = UIColor(themeHex: tokens.text); label.alpha = strong ? 1 : 0.45 }
     }
     init(key: FlickKey) {
         self.key = key
         super.init(frame: .zero)
+        layer.insertSublayer(relief, at: 0)
         backgroundColor = .secondarySystemBackground
         layer.cornerRadius = 6
-        title.text = key.label; title.font = .systemFont(ofSize: 23)
+        title.text = key.label; title.font = .systemFont(ofSize: 20, weight: .light)
         title.textAlignment = .center; title.translatesAutoresizingMaskIntoConstraints = false
         addSubview(title)
         for index in 1...4 {
             let label = UILabel(); label.text = key.characters.count > index ? key.characters[index] : ""
-            label.font = .systemFont(ofSize: 11, weight: .semibold); label.textAlignment = .center
-            label.isHidden = true; label.isAccessibilityElement = false
+            label.font = .systemFont(ofSize: 9, weight: .regular); label.textAlignment = .center
+            label.alpha = 0.45; label.isAccessibilityElement = false
             addSubview(label); guides.append(label)
         }
         NSLayoutConstraint.activate([title.centerXAnchor.constraint(equalTo: centerXAnchor), title.centerYAnchor.constraint(equalTo: centerYAnchor)])
@@ -44,10 +49,13 @@ final class FlickButton: UIControl {
         super.layoutSubviews()
         let locations = [CGPoint(x: 13, y: bounds.midY), CGPoint(x: bounds.midX, y: 9), CGPoint(x: bounds.width - 13, y: bounds.midY), CGPoint(x: bounds.midX, y: bounds.height - 9)]
         for (label, point) in zip(guides, locations) { label.frame = CGRect(x: point.x - 10, y: point.y - 7, width: 20, height: 14) }
+        CATransaction.begin(); CATransaction.setDisableActions(true)
+        relief.frame = bounds; relief.cornerRadius = tokens.cornerRadius
+        CATransaction.commit()
         layer.shadowPath = UIBezierPath(roundedRect: bounds, cornerRadius: tokens.cornerRadius).cgPath
     }
     private func feedback(_ pressed: Bool) {
-        guides.forEach { $0.isHidden = !pressed }
+        guides.forEach { $0.alpha = pressed || strong ? 1 : 0.45 }
         KeyboardKeyStyle.apply(self, tokens: tokens, pressed: pressed, strong: strong)
     }
     override func accessibilityActivate() -> Bool { onCommit?(key.label); return true }

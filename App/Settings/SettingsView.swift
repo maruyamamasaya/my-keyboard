@@ -3,16 +3,18 @@ import KeyboardCore
 
 struct SettingsView: View {
     @ObservedObject var model: AppModel
-    @State private var landscape = false
     var body: some View {
         Form {
-            Section("レイアウト") {
-                Picker("向き", selection: $landscape) { Text("縦").tag(false); Text("横").tag(true) }.pickerStyle(.segmented)
-                ProfileSettings(profile: landscape ? $model.preferences.landscape : $model.preferences.portrait)
-                NavigationLink("テーマギャラリー") { ThemeGallery(model: model) }
+            Section("カラー") {
+                NavigationLink("カラーパレット") { ThemeGallery(model: model) }
+                NavigationLink("カラーを編集") { ThemeEditor(model: model) }
                 NavigationLink("キーボードプレビュー") { PreviewScreen(model: model) }
-                KeyboardPreview(selection: model.appearance, profile: landscape ? model.preferences.landscape : model.preferences.portrait, image: model.themeImage)
-                Text("設定はキーボードを開き直すと読み込まれます。端末と入力先によって高さは調整されます。")
+                KeyboardPreview(selection: model.appearance, showsCandidates: model.preferences.showsCandidates)
+                Text("縦横とも高さ360・幅100%・キー間隔3で固定。カラーはキーボードを開き直すと反映されます。")
+            }
+            Section("変換候補") {
+                Toggle("候補を表示", isOn: $model.preferences.showsCandidates)
+                Text("既定は非表示。キーボードの目のアイコンでも一時的に切り替えられます。単語の再変換中は候補を表示します。")
             }
             Section("変換学習") {
                 Toggle("候補の選好を端末に保存", isOn: $model.preferences.learningEnabled)
@@ -25,21 +27,5 @@ struct SettingsView: View {
                 Text("1件16KBまで。未ピンの項目は30日で期限切れとなり、次に履歴を開くと削除します。ピンも件数上限に含みます。自動監視はしません。")
             }
         }.navigationTitle("設定")
-    }
-}
-struct ProfileSettings: View {
-    @Binding var profile: LayoutProfile
-    var body: some View {
-        VStack(alignment: .leading) {
-            Text("高さ \(Int(profile.sanitized().height))")
-            Slider(value: $profile.height, in: 320...420, step: 5)
-            Text("幅 \(Int(profile.sanitized().widthFraction * 100))%（キーサイズ）")
-            Slider(value: $profile.widthFraction, in: 0.7...1, step: 0.05)
-            Text("キー間隔 \(Int(profile.sanitized().spacing))")
-            Slider(value: $profile.spacing, in: 0...12, step: 1)
-            Picker("配置", selection: $profile.alignment) {
-                Text("左").tag(KeyboardAlignment.left); Text("中央").tag(KeyboardAlignment.center); Text("右").tag(KeyboardAlignment.right)
-            }.pickerStyle(.segmented)
-        }
     }
 }

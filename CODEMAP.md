@@ -20,7 +20,7 @@
 
 ## iOS入力・変換
 - Primary paths: [KeyboardViewController](KeyboardExtension/KeyboardViewController.swift)、[Composition](Core/InputEngine/Composition.swift)、[FlickMap](Core/InputEngine/FlickMap.swift)、[AzooKeyConversion](KeyboardExtension/Input/AzooKeyConversion.swift)
-- Search keywords: `updateCandidates`、`revision`、`correspondingCount`、`repeatDelete`、`startReconversion`
+- Search keywords: `DocumentIdentity`、`KeyboardLifecycle`、`requireJapanesePrediction`、`WordReconversion`、`showsCandidates`、`LiveTextSession`、`setMarkedText`、`updateCandidates`、`revision`、`correspondingCount`、`repeatDelete`、`startReconversion`
 - Key entry points: UIInputViewController、input、commit
 - Related tests: [Coreテスト](Tests/Unit/KeyboardCoreTests.swift)、[Mac課題](docs/07-TESTING-AND-ISSUES.md)
 

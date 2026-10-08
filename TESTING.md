@@ -29,5 +29,5 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify.ps1
 
 ## Mac側のFull
 `swift test`、Xcodeビルド・StorageTests・対象操作を検証する。コマンドの正本は [Mac手順](docs/08-MAC-VALIDATION.md)。
-Coreの12単体テストとStorageの5統合テストは作成済みだが未実行。PythonのSQL試験はSwiftラッパーを実行していない。
+Core22単体テストとStorage/marked textの10統合テストをMac/Simulatorで実行済み。候補表示の旧設定移行、単語境界・修正、UITextViewのmarked text更新・単語修正・確定・取消、文書IDがnilのObjective-C getter、オフライン予測と通常変換・ユーザー辞書を含む。実機ホストの通知・入力互換性は別途検証する。
 lint/format専用ツール、E2E自動化、実測性能基準は未整備。WindowsのVerify成功はSwift型検査やアプリ品質の保証ではない。

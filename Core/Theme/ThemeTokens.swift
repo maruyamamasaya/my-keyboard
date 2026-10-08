@@ -73,7 +73,11 @@ public struct ThemePreset: Identifiable, Equatable, Sendable {
 
 public enum ThemeCatalog {
     public static let blueCosmos = ThemePreset(id: "blue-cosmos", name: "Blue Cosmos", tokens:
-        .init(background: "#081426", key: "#20364F", text: "#F2F7FF", accent: "#9CD7FF", stars: true))
+        {
+            var tokens: ThemeTokens = .init(background: "#080F26", key: "#203D68", text: "#F2F7FF", accent: "#70DEFF", stars: true)
+            tokens.cornerRadius = 14; tokens.borderWidth = 1.2; tokens.shadowOpacity = 0.24
+            return tokens
+        }())
     public static let presets: [ThemePreset] = [blueCosmos,
         .init(id: "minimal-light", name: "Minimal Light", tokens: .init(background: "#E8EDF3", key: "#FFFFFF", text: "#152238", accent: "#2258A0", dark: false)),
         .init(id: "minimal-dark", name: "Minimal Dark", tokens: .init(background: "#14171D", key: "#2C323C", text: "#F4F6FA", accent: "#B9D5FF")),
@@ -89,7 +93,14 @@ public struct ThemeSelection: Codable, Equatable, Sendable {
     public var custom: ThemeTokens?
     public var imageName: String?
     public init() {}
-    public var tokens: ThemeTokens { (custom ?? ThemeCatalog.preset(presetID).tokens).readable }
+    public var tokens: ThemeTokens {
+        var value = custom ?? ThemeCatalog.preset(presetID).tokens
+        let fixed = ThemeCatalog.blueCosmos.tokens
+        value.cornerRadius = fixed.cornerRadius; value.opacity = fixed.opacity
+        value.borderWidth = fixed.borderWidth; value.shadowOpacity = fixed.shadowOpacity
+        value.stars = fixed.stars; value.dark = fixed.dark
+        return value.readable
+    }
     public var safeImageName: String? {
         guard let imageName, imageName.hasSuffix(".jpg"), UUID(uuidString: String(imageName.dropLast(4))) != nil else { return nil }
         return imageName
