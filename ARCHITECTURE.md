@@ -34,3 +34,5 @@ root/          共通ルール・現在地・各分野の案内
 文書IDの取得はShared/DocumentIdentity.swiftでObjective-Cのnullableオブジェクトを確認してからUUIDへ橋渡しする。ID不明時はmarked text・破壊的置換の所有権を認めない。
 
 検索入口は [CODEMAP.md](CODEMAP.md)、運用の正本は [OPERATIONS.md](OPERATIONS.md)。
+
+入力ルートはKeyboardViewController内のKeyboardInputView。allowsSelfSizingを有効にし、intrinsicContentSizeとsystemLayoutSizeFittingでCoreの高さ300を返す。本体の説明も同じ値を使う。

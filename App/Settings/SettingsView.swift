@@ -10,11 +10,11 @@ struct SettingsView: View {
                 NavigationLink("カラーを編集") { ThemeEditor(model: model) }
                 NavigationLink("キーボードプレビュー") { PreviewScreen(model: model) }
                 KeyboardPreview(selection: model.appearance, showsCandidates: model.preferences.showsCandidates)
-                Text("縦横とも高さ360・幅100%・キー間隔3で固定。カラーはキーボードを開き直すと反映されます。")
+                Text("縦横とも高さ\(Int(LayoutProfile().height))・幅100%・キー間隔3で固定。カラーはキーボードを開き直すと反映されます。")
             }
             Section("変換候補") {
                 Toggle("候補を表示", isOn: $model.preferences.showsCandidates)
-                Text("既定は非表示。キーボードの目のアイコンでも一時的に切り替えられます。単語の再変換中は候補を表示します。")
+                Text("既定は表示。キーボードの目のアイコンでも一時的に切り替えられます。単語の再変換中は候補を表示します。")
             }
             Section("変換学習") {
                 Toggle("候補の選好を端末に保存", isOn: $model.preferences.learningEnabled)

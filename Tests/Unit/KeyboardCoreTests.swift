@@ -58,7 +58,7 @@ final class KeyboardCoreTests: XCTestCase {
         var layout = LayoutProfile()
         layout.height = .nan; layout.spacing = 100; layout.widthFraction = 0
         let safe = layout.sanitized()
-        XCTAssertEqual(safe.height, 340)
+        XCTAssertEqual(safe.height, 300)
         XCTAssertEqual(safe.spacing, 3)
         XCTAssertEqual(safe.widthFraction, 1)
         var preferences = KeyboardPreferences()

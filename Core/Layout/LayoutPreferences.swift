@@ -3,7 +3,7 @@ import Foundation
 public enum KeyboardAlignment: String, Codable, CaseIterable, Sendable { case left, center, right }
 public enum KeyboardTheme: String, Codable, CaseIterable, Sendable { case system, light, dark }
 public struct LayoutProfile: Codable, Equatable, Sendable {
-    public var height: Double = 340
+    public var height: Double = 300
     public var widthFraction: Double = 1
     public var spacing: Double = 3
     public var alignment: KeyboardAlignment = .center

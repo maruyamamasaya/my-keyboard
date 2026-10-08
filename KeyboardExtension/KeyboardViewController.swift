@@ -2,6 +2,15 @@ import UIKit
 import OSLog
 import KeyboardCore
 
+@MainActor private final class KeyboardInputView: UIInputView {
+    override var intrinsicContentSize: CGSize {
+        CGSize(width: UIView.noIntrinsicMetric, height: CGFloat(LayoutProfile().height))
+    }
+    override func systemLayoutSizeFitting(_ targetSize: CGSize) -> CGSize {
+        CGSize(width: targetSize.width, height: CGFloat(LayoutProfile().height))
+    }
+}
+
 @MainActor final class KeyboardViewController: UIInputViewController {
     private let lifecycleLog = Logger(subsystem: "maruyama.MyKeyboard", category: "KeyboardLifecycle")
     private let lifecycleID = UUID().uuidString
@@ -67,9 +76,16 @@ import KeyboardCore
         cosmos.setNeedsDisplay()
     }
 
+    override func loadView() {
+        let keyboardView = KeyboardInputView(frame: CGRect(x: 0, y: 0, width: 0, height: CGFloat(LayoutProfile().height)), inputViewStyle: .keyboard)
+        keyboardView.allowsSelfSizing = true
+        inputView = keyboardView
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         lifecycleLog.info("View loaded: controller=\(self.lifecycleID, privacy: .public)")
+        inputView?.allowsSelfSizing = true
         primaryLanguage = "ja-JP"
         view.backgroundColor = .systemBackground
         cosmos.translatesAutoresizingMaskIntoConstraints = false
@@ -96,7 +112,7 @@ import KeyboardCore
         let header = UIView(); headerStack.axis = .vertical; headerStack.spacing = 0
         headerStack.translatesAutoresizingMaskIntoConstraints = false; header.addSubview(headerStack)
         NSLayoutConstraint.activate([
-            header.heightAnchor.constraint(equalToConstant: 88),
+            header.heightAnchor.constraint(equalToConstant: 68),
             headerStack.topAnchor.constraint(equalTo: header.topAnchor, constant: 0),
             headerStack.bottomAnchor.constraint(equalTo: header.bottomAnchor, constant: 0),
             headerStack.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: 12),
@@ -114,7 +130,7 @@ import KeyboardCore
             statusLabel.topAnchor.constraint(equalTo: header.topAnchor, constant: 0),
             statusLabel.leadingAnchor.constraint(equalTo: headerStack.leadingAnchor),
             statusLabel.trailingAnchor.constraint(equalTo: headerStack.trailingAnchor),
-            statusLabel.heightAnchor.constraint(equalToConstant: 44)
+            statusLabel.heightAnchor.constraint(equalToConstant: 32)
         ])
         let candidateScroll = UIScrollView(); candidateScroll.showsHorizontalScrollIndicator = false
         candidateRow.axis = .horizontal; candidateRow.spacing = 6; candidateRow.translatesAutoresizingMaskIntoConstraints = false
@@ -125,7 +141,7 @@ import KeyboardCore
             candidateRow.topAnchor.constraint(equalTo: candidateScroll.contentLayoutGuide.topAnchor),
             candidateRow.bottomAnchor.constraint(equalTo: candidateScroll.contentLayoutGuide.bottomAnchor),
             candidateRow.heightAnchor.constraint(equalTo: candidateScroll.frameLayoutGuide.heightAnchor),
-            candidateScroll.heightAnchor.constraint(equalToConstant: 44)
+            candidateScroll.heightAnchor.constraint(equalToConstant: 32)
         ])
         headerStack.addArrangedSubview(candidateScroll)
         grid.axis = .horizontal; grid.distribution = .fill; grid.spacing = 5
@@ -137,7 +153,7 @@ import KeyboardCore
         NSLayoutConstraint.activate([
             toolbar.leadingAnchor.constraint(equalTo: toolbarScroll.contentLayoutGuide.leadingAnchor), toolbar.trailingAnchor.constraint(equalTo: toolbarScroll.contentLayoutGuide.trailingAnchor),
             toolbar.topAnchor.constraint(equalTo: toolbarScroll.contentLayoutGuide.topAnchor), toolbar.bottomAnchor.constraint(equalTo: toolbarScroll.contentLayoutGuide.bottomAnchor),
-            toolbar.heightAnchor.constraint(equalTo: toolbarScroll.frameLayoutGuide.heightAnchor), toolbarScroll.heightAnchor.constraint(equalToConstant: 44)
+            toolbar.heightAnchor.constraint(equalTo: toolbarScroll.frameLayoutGuide.heightAnchor), toolbarScroll.heightAnchor.constraint(equalToConstant: 36)
         ])
         let visibility = button("候補表示", role: .toolbar) { [weak self] in
             guard let self else { return }; self.showsCandidates.toggle(); self.render()
@@ -174,8 +190,8 @@ import KeyboardCore
             clipboardPanel.leadingAnchor.constraint(equalTo: grid.leadingAnchor), clipboardPanel.trailingAnchor.constraint(equalTo: grid.trailingAnchor),
             clipboardPanel.topAnchor.constraint(equalTo: grid.topAnchor), clipboardPanel.bottomAnchor.constraint(equalTo: grid.bottomAnchor)
         ])
-        heightConstraint = view.heightAnchor.constraint(equalToConstant: 340)
-        heightConstraint?.priority = .defaultHigh; heightConstraint?.isActive = true
+        heightConstraint = view.heightAnchor.constraint(equalToConstant: CGFloat(LayoutProfile().height))
+        heightConstraint?.priority = UILayoutPriority(999); heightConstraint?.isActive = true
         buildGrid()
     }
 
@@ -233,7 +249,7 @@ import KeyboardCore
 
     private func applyLayout() {
         let profile = preferences.profile(landscape: landscape)
-        heightConstraint?.constant = 340
+        heightConstraint?.constant = CGFloat(profile.height)
         grid.spacing = profile.spacing
         overrideUserInterfaceStyle = appearance.tokens.dark ? .dark : .light
         // Alignment and width are expressed by frame constraints; no orientation-specific fixed screen size.
@@ -264,7 +280,7 @@ import KeyboardCore
             button.setContentCompressionResistancePriority(.required, for: .horizontal)
             button.titleLabel?.adjustsFontSizeToFitWidth = false
         }
-        let minimumHeight = button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44)
+        let minimumHeight = button.heightAnchor.constraint(greaterThanOrEqualToConstant: role == .candidate ? 32 : role == .toolbar ? 36 : 44)
         minimumHeight.priority = .defaultHigh; minimumHeight.isActive = true
         let symbols = ["候補表示": "eye.slash", "✦ 履歴": "doc.on.clipboard", "←": "chevron.left", "→": "chevron.right", "確定": "checkmark.circle", "取消": "arrow.uturn.backward", "再変換": "arrow.triangle.2.circlepath", "単語削除": "delete.left.fill", "⌫": "delete.left", "☺": "face.smiling"]
         if let symbol = symbols[title] {

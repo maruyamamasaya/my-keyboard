@@ -87,7 +87,7 @@ def project_model():
         settings = {
             "PRODUCT_NAME": "$(TARGET_NAME)", "PRODUCT_BUNDLE_IDENTIFIER": bundle_id,
             "SDKROOT": "iphoneos", "SUPPORTED_PLATFORMS": "iphoneos iphonesimulator", "TARGETED_DEVICE_FAMILY": "1",
-            "MARKETING_VERSION": "0.1.0", "CURRENT_PROJECT_VERSION": "1", "CLANG_ENABLE_MODULES": "YES",
+            "MARKETING_VERSION": "0.1.0", "CURRENT_PROJECT_VERSION": "2", "CLANG_ENABLE_MODULES": "YES",
             "LD_RUNPATH_SEARCH_PATHS": ["$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks"],
             "OTHER_LDFLAGS": ["$(inherited)", "-lsqlite3"],
         }
@@ -100,7 +100,7 @@ def project_model():
             settings["CODE_SIGN_ENTITLEMENTS"] = f"Config/{name}.entitlements"
             file(settings["INFOPLIST_FILE"]); file(settings["CODE_SIGN_ENTITLEMENTS"])
         if name != "MyKeyboard":
-            settings["APPLICATION_EXTENSION_API_ONLY"] = "YES"
+            settings["APPLICATION_EXTENSION_API_ONLY"] = "NO" if name == "StorageTests" else "YES"
             settings["SKIP_INSTALL"] = "YES"
         phases = [source_phase, framework_phase, resource_phase]
         target_dependencies = []
