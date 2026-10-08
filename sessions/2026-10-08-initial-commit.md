@@ -8,4 +8,4 @@ Full Verify成功、Python 13テスト成功。Swift/iOSの未検証状態は既
 ## Changes
 現時点の成果物を初期コミットへまとめる。
 ## Remaining Issues
-プッシュ先URLまたは新規リポジトリの名前・公開範囲の指定が必要。指定後にリモート設定とプッシュを実施する。
+ユーザー指定の https://github.com/maruyamamasaya/my-keyboard.git をoriginとして設定し、mainをプッシュする。初期コミットは315ec97。iOS検証は引き続き未実施。

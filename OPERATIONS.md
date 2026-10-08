@@ -1,7 +1,8 @@
 # 起動・運用
 
 プロジェクトルートは `C:\Users\m-maruyama\Development\my-keyboard`。
-Gitブランチは main。初期ソースはあるがiOSビルド・起動未確認。remote・CI/CD・デプロイは未設定。
+Gitブランチは main。初期ソースはあるがiOSビルド・起動未確認。CI/CD・デプロイは未設定。
+リモートoriginは https://github.com/maruyamamasaya/my-keyboard.git 。
 Macの起動・署名・依存解決・DB検証の正本は [Mac手順](docs/08-MAC-VALIDATION.md)。
 
 ## 開発基盤
