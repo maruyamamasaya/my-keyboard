@@ -19,7 +19,6 @@ import KeyboardCore
     private var wordReconversion: WordReconversion?
     private var wordCandidates: [ConversionChoice] = []
     private var showsCandidates = true
-    private var candidateVisibilityButton: UIButton?
     private var preferences = KeyboardPreferences()
     private var appearance = ThemeSelection()
     private let cosmos = CosmosBackgroundView(frame: .zero)
@@ -31,6 +30,9 @@ import KeyboardCore
     private var replacing: RecentCommit?
     private var mode = 0
     private var uppercase = false
+    private var emojiRecents = RecentCharacters()
+    private var symbolRecents = RecentCharacters()
+    private weak var characterPicker: CharacterPickerView?
     private var ownEdit = false
     private var landscape = false
     private var heightConstraint: NSLayoutConstraint?
@@ -70,6 +72,7 @@ import KeyboardCore
             }
         }
         visit(bodyStack); visit(clipboardPanel)
+        characterPicker?.applyTheme(appearance.tokens)
         globe.backgroundColor = .clear; globe.layer.borderWidth = 0; globe.layer.shadowOpacity = 0
         globe.tintColor = UIColor(themeHex: appearance.tokens.canvasAccent)
         updateReturnKey()
@@ -155,20 +158,9 @@ import KeyboardCore
             toolbar.topAnchor.constraint(equalTo: toolbarScroll.contentLayoutGuide.topAnchor), toolbar.bottomAnchor.constraint(equalTo: toolbarScroll.contentLayoutGuide.bottomAnchor),
             toolbar.heightAnchor.constraint(equalTo: toolbarScroll.frameLayoutGuide.heightAnchor), toolbarScroll.heightAnchor.constraint(equalToConstant: CGFloat(KeyboardGeometry.toolbarHeight))
         ])
-        let visibility = button("候補表示", role: .toolbar) { [weak self] in
-            guard let self else { return }; self.showsCandidates.toggle(); self.render()
-        }
-        candidateVisibilityButton = visibility; toolbar.addArrangedSubview(visibility)
-        toolbar.addArrangedSubview(button("あA", role: .toolbar) { [weak self] in
-            guard let self else { return }; self.switchMode(self.mode == 0 ? 1 : 0)
-        })
-        toolbar.addArrangedSubview(button("✦ 履歴", role: .toolbar) { [weak self] in self?.showClipboard() })
+        toolbar.addArrangedSubview(button("コピー", role: .toolbar) { [weak self] in self?.showClipboard() })
         toolbar.addArrangedSubview(button("←", role: .toolbar) { [weak self] in self?.moveCursor(-1) })
         toolbar.addArrangedSubview(button("→", role: .toolbar) { [weak self] in self?.moveCursor(1) })
-        toolbar.addArrangedSubview(button("確定", role: .toolbar) { [weak self] in self?.commitReading() })
-        toolbar.addArrangedSubview(button("取消", role: .toolbar) { [weak self] in self?.cancelComposition() })
-        toolbar.insertArrangedSubview(button("再変換", role: .toolbar) { [weak self] in self?.startReconversion() }, at: 1)
-        toolbar.addArrangedSubview(button("単語削除", role: .toolbar) { [weak self] in self?.deleteWord() })
         let toolbarRow = UIStackView(); toolbarRow.axis = .horizontal; toolbarRow.spacing = 4
         toolbarRow.addArrangedSubview(toolbarScroll)
         let dismiss = button("キーボードを閉じる", role: .toolbar) { [weak self] in
@@ -185,7 +177,7 @@ import KeyboardCore
         globe.addTarget(self, action: #selector(handleInputModeList(from:with:)), for: .allTouchEvents)
         let globeWidth = globe.widthAnchor.constraint(equalToConstant: 48)
         globeWidth.priority = .defaultHigh; globeWidth.isActive = true
-        toolbar.insertArrangedSubview(globe, at: 0)
+        toolbar.addArrangedSubview(globe)
         clipboardPanel.axis = .vertical; clipboardPanel.spacing = 4; clipboardPanel.isHidden = true
         clipboardPanel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(clipboardPanel)
@@ -285,7 +277,7 @@ import KeyboardCore
         }
         let minimumHeight = button.heightAnchor.constraint(greaterThanOrEqualToConstant: role == .candidate ? 32 : role == .toolbar ? 36 : 44)
         minimumHeight.priority = .defaultHigh; minimumHeight.isActive = true
-        let symbols = ["候補表示": "eye.slash", "✦ 履歴": "doc.on.clipboard", "←": "chevron.left", "→": "chevron.right", "確定": "checkmark.circle", "取消": "arrow.uturn.backward", "再変換": "arrow.triangle.2.circlepath", "単語削除": "delete.left.fill", "⌫": "delete.left", "☺": "face.smiling"]
+        let symbols = ["候補表示": "eye.slash", "コピー": "doc.on.clipboard", "←": "chevron.left", "→": "chevron.right", "確定": "checkmark.circle", "取消": "arrow.uturn.backward", "再変換": "arrow.triangle.2.circlepath", "単語削除": "delete.left.fill", "⌫": "delete.left", "☺": "face.smiling"]
         if let symbol = symbols[title] {
             button.setTitle(nil, for: .normal); button.setImage(UIImage(systemName: symbol), for: .normal)
         }
@@ -306,6 +298,23 @@ import KeyboardCore
     private func clear(_ stack: UIStackView) { stack.arrangedSubviews.forEach { stack.removeArrangedSubview($0); $0.removeFromSuperview() } }
     private func buildGrid() {
         clear(grid)
+        returnButton = nil
+        if mode == 4 || mode == 5 {
+            let picker = CharacterPickerView(palette: mode == 4 ? .emoji : .symbol, tokens: appearance.tokens,
+                                             emojiRecents: emojiRecents, symbolRecents: symbolRecents)
+            picker.onMode = { [weak self] in self?.switchMode($0) }
+            picker.onDelete = { [weak self] in self?.deleteOne() }
+            picker.onSelect = { [weak self] text in
+                guard let self else { return }
+                self.commitReading()
+                self.edit { self.textDocumentProxy.insertText(text) }
+                self.recent = nil
+                if CharacterCatalog.contains(text, in: .emoji) { self.emojiRecents.record(text) }
+                else if CharacterCatalog.contains(text, in: .symbol) { self.symbolRecents.record(text) }
+            }
+            characterPicker = picker; grid.addArrangedSubview(picker)
+            applyAppearance(); return
+        }
         var keys = FlickMap.japanese
         if mode == 1 {
             keys = FlickMap.english(uppercase: uppercase)
@@ -329,23 +338,22 @@ import KeyboardCore
         if mode == 1 {
             left.distribution = .fill
             let cursor = button("→") { [weak self] in self?.moveCursor(1) }
-            let cancel = button("取消") { [weak self] in self?.cancelComposition() }
+            let language = button("あA") { [weak self] in self?.switchMode(0) }
             let symbols = button("☆123") { [weak self] in self?.switchMode(2) }
-            left.addArrangedSubview(cursor); left.addArrangedSubview(cancel); left.addArrangedSubview(symbols)
+            left.addArrangedSubview(cursor); left.addArrangedSubview(language); left.addArrangedSubview(symbols)
             NSLayoutConstraint.activate([
-                cursor.heightAnchor.constraint(equalTo: cancel.heightAnchor),
+                cursor.heightAnchor.constraint(equalTo: language.heightAnchor),
                 symbols.heightAnchor.constraint(equalTo: cursor.heightAnchor, multiplier: 2, constant: spacing)
             ])
         } else {
-            left.addArrangedSubview(button("記号") { [weak self] in self?.switchMode(3) })
+            left.addArrangedSubview(button(mode == 3 ? "一覧" : "記号") { [weak self] in
+                guard let self else { return }; self.switchMode(self.mode == 3 ? 5 : 3)
+            })
             left.addArrangedSubview(button("123") { [weak self] in self?.switchMode(2) })
             left.addArrangedSubview(button("あA") { [weak self] in
                 guard let self else { return }; self.switchMode(self.mode == 0 ? 1 : 0)
             })
             left.addArrangedSubview(button("☺") { [weak self] in self?.switchMode(4) })
-        }
-        if mode == 4 {
-            keys = ["😀", "😊", "🥰", "😂", "😎", "🥲", "👍", "🙏", "❤️", "✨", "🎉", "🌸"].map { FlickKey([$0]) }
         }
         for rowIndex in 0..<4 {
             let row = UIStackView(); row.axis = .horizontal; row.distribution = .fillEqually; row.spacing = spacing
@@ -382,7 +390,7 @@ import KeyboardCore
         updateReturnKey(); applyAppearance()
     }
     private func switchMode(_ value: Int) {
-        commitReading(); mode = value; buildGrid()
+        commitReading(); stopActivity(); closeClipboard(); mode = value; buildGrid()
     }
     private func updateReturnKey() {
         let title: String
@@ -433,10 +441,6 @@ import KeyboardCore
         updateReturnKey()
         let visible = showsCandidates || wordReconversion != nil
         candidateRow.isHidden = !visible
-        candidateVisibilityButton?.setImage(UIImage(systemName: visible ? "eye" : "eye.slash"), for: .normal)
-        candidateVisibilityButton?.isEnabled = wordReconversion == nil
-        candidateVisibilityButton?.accessibilityLabel = wordReconversion != nil ? "再変換中は候補を表示" : visible ? "候補を非表示" : "候補を表示"
-        candidateVisibilityButton?.accessibilityValue = visible ? "表示中" : "非表示"
         statusLabel.isHidden = true
         clear(candidateRow)
         let revision = composition.revision

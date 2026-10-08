@@ -66,8 +66,8 @@ private final class PreviewKeyboardView: UIView {
         }
         header.addArrangedSubview(scroll(candidates, height: KeyboardGeometry.candidateHeight))
         let toolbar = UIStackView(); toolbar.spacing = 4
-        for (title, symbol) in [("候補", showsCandidates ? "eye" : "eye.slash"), ("あA", "textformat"), ("履歴", "doc.on.clipboard"), ("左", "chevron.left"), ("右", "chevron.right"), ("確定", "checkmark.circle"), ("取消", "arrow.uturn.backward"), ("再変換", "arrow.triangle.2.circlepath"), ("単語削除", "delete.left.fill")] {
-            let key = action(title, role: .toolbar, symbol: title == "あA" ? nil : symbol); key.widthAnchor.constraint(equalToConstant: 44).isActive = true; toolbar.addArrangedSubview(key)
+        for (title, symbol) in [("コピー", "doc.on.clipboard"), ("左", "chevron.left"), ("右", "chevron.right")] {
+            let key = action(title, role: .toolbar, symbol: symbol); key.widthAnchor.constraint(equalToConstant: 44).isActive = true; toolbar.addArrangedSubview(key)
         }
         let tools = UIStackView(); tools.spacing = 4
         tools.addArrangedSubview(scroll(toolbar, height: KeyboardGeometry.toolbarHeight))
@@ -82,9 +82,9 @@ private final class PreviewKeyboardView: UIView {
         NSLayoutConstraint.activate([left.widthAnchor.constraint(equalTo: right.widthAnchor), center.widthAnchor.constraint(equalTo: left.widthAnchor, multiplier: 3, constant: spacing * 2)])
         if mode == .english {
             left.distribution = .fill
-            let cursor = action("→"), cancel = action("取消", symbol: "arrow.uturn.backward"), symbols = action("☆123")
-            left.addArrangedSubview(cursor); left.addArrangedSubview(cancel); left.addArrangedSubview(symbols)
-            NSLayoutConstraint.activate([cursor.heightAnchor.constraint(equalTo: cancel.heightAnchor), symbols.heightAnchor.constraint(equalTo: cursor.heightAnchor, multiplier: 2, constant: spacing)])
+            let cursor = action("→"), language = action("あA"), symbols = action("☆123")
+            left.addArrangedSubview(cursor); left.addArrangedSubview(language); left.addArrangedSubview(symbols)
+            NSLayoutConstraint.activate([cursor.heightAnchor.constraint(equalTo: language.heightAnchor), symbols.heightAnchor.constraint(equalTo: cursor.heightAnchor, multiplier: 2, constant: spacing)])
         } else {
             for title in ["記号", "123", "あA", "☺"] { left.addArrangedSubview(action(title, symbol: title == "☺" ? "face.smiling" : nil)) }
         }

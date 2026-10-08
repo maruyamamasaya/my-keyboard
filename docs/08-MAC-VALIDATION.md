@@ -45,7 +45,7 @@ xcodebuild -project MyKeyboard.xcodeproj -scheme MyKeyboard -destination 'platfo
 ```
 Apple SiliconのSimulatorでx86_64リンク失敗が出る場合は、上のtestに `ONLY_ACTIVE_ARCH=YES ARCHS=arm64` を追加して検証する。
 
-`swift test` は共通ロジック・テーマ・ライブ変換・単語再変換・英語配列・技術用記号の25テスト。schemeのStorageTestsはSQLite Swiftラッパー・テーマ保存・UIKit marked text・プレビューの14テスト。Pythonテストはこれらを代替しない。
+`swift test` は共通ロジック・テーマ・ライブ変換・単語再変換・英語配列・技術用記号・Unicode一覧/最近項目の27テスト。schemeのStorageTestsはSQLite Swiftラッパー・テーマ保存・UIKit marked text・プレビュー・絵文字/記号一覧の16テスト。Pythonテストはこれらを代替しない。
 テストbundleのschema.sql存在を確認。Resources/PrivacyInfo.xcprivacy、ThirdPartyNotices.txtが本体と拡張に含まれることも確認する。
 ビルドエラーはT-001等へ記録し、修正後に同じ構成で再実行する。
 
@@ -58,8 +58,9 @@ Xcodeで本体schemeと接続したiPhoneを選びRun。必要なら端末のDev
 ## 6. 日本語入力・編集
 - 「あいうえお」「がっこう」「きょうはいいてんき」を各方向のflickと濁点/小書きで入力。候補→確定・取消・かな/カタカナを確認。
 - ABCのフリック、⇧、数字、記号、空白、改行、地球キーを確認。toolbarは横スクロール可能。
+- ☺→カテゴリ横スクロール→一覧縦スクロールで選択。肌色/国旗/複合絵文字、絵文字/記号タブ、最近各40件、記号キーの一覧→括弧ペア/URL、かなへ戻る操作を確認。未確定変換から開く際の確定と周囲の本文の保持、フルアクセスOFF、最小幅/回転/VoiceOverも試す。最近項目はcontroller終了時に消える。
 - 本体の入力テスト画面、メモ、Safari等でUITextField/TextView/Web欄の互換性を比較。
-- ライブ変換の更新・確定・取消、候補既定非表示・目アイコン切替を確認する。再変換→左右で単語選択→候補タップ→Enterで全体確定し、周囲の本文と他の単語が保たれることを確認する。
+- ライブ変換の更新・確定・取消、本体設定による候補表示切替を確認する。上部がコピー・左・右の順で、削除したボタンが表示されないことを確認する。
 - ⌫長押し→離指→別ホストで削除が止まる。スペースdrag後に余計な空白が入らない。
 - 本体で単語を追加/編集/削除し、拡張を開き直して完全一致読みの候補を確認。学習ON/OFFとリセットを試す。
 - 再変換・語削除は既定無効。非個人情報の試験環境でのみ `Config/MyKeyboardExtension-Info.plist` のEnableExperimentalHostReplacementを一時trueへ変更し、T-009を実施する。生成スクリプトの再実行はfalseへ戻す。

@@ -467,6 +467,16 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "EA05BA0C4532BDD72DAFDB0A";
 		};
+		"736CFB7569AA9BC9BF3109A2" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "KeyboardExtension/Views/CharacterPickerView.swift";
+			"sourceTree" = "<group>";
+		};
+		"F90B1C9CCCDF103A9B4AC874" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "736CFB7569AA9BC9BF3109A2";
+		};
 		"224B602D176F83E28BEDC717" = {
 			"isa" = "PBXBuildFile";
 			"fileRef" = "7B2F5A5289E8026317E01709";
@@ -514,6 +524,7 @@
 				"F85182CFDEE1BBC81407FFAF",
 				"01EE5D2E0E79030E63ADB762",
 				"27B3BF803154D79E559D222B",
+				"F90B1C9CCCDF103A9B4AC874",
 				"224B602D176F83E28BEDC717",
 				"CDDCCF6408112D0204C96856",
 				"655380E22627690D9C62B4FA",
@@ -686,6 +697,16 @@
 			"productReference" = "D65F864D6AF3D13FDB167E4B";
 			"productType" = "com.apple.product-type.app-extension";
 		};
+		"C1B6F5D1560E171C0E4B78F1" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "Tests/Integration/CharacterPickerTests.swift";
+			"sourceTree" = "<group>";
+		};
+		"C67CB881C774B82B88146B3A" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "C1B6F5D1560E171C0E4B78F1";
+		};
 		"0AA9053CFE1D196E10279F64" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
@@ -792,6 +813,10 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "EA05BA0C4532BDD72DAFDB0A";
 		};
+		"EE9D2F9F3138508E51C9E75E" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "736CFB7569AA9BC9BF3109A2";
+		};
 		"CEF2C9EEE75CA99CFF451833" = {
 			"isa" = "PBXBuildFile";
 			"fileRef" = "8DAEFC6C108F05B2A4F1B616";
@@ -812,6 +837,7 @@
 			"isa" = "PBXSourcesBuildPhase";
 			"buildActionMask" = 2147483647;
 			"files" = (
+				"C67CB881C774B82B88146B3A",
 				"A2ADEF517776CE1ED0DC589B",
 				"E6F277847349C794160F721C",
 				"1297352DB2DBE49198B0FB47",
@@ -828,6 +854,7 @@
 				"CB9FC755578A8D06DEC4740F",
 				"8801CE3528F43AD1F8574D1E",
 				"623A6515094465538773BCC9",
+				"EE9D2F9F3138508E51C9E75E",
 				"CEF2C9EEE75CA99CFF451833",
 				"ED96379928752CCFC484F747",
 				"027294FD1F6D722739CF1619",
@@ -1021,8 +1048,10 @@
 				"9D0ECA50F6481261086883F5",
 				"9CFB932CE2D1DB03DB22F4A2",
 				"EA05BA0C4532BDD72DAFDB0A",
+				"736CFB7569AA9BC9BF3109A2",
 				"9351C2BF47C85657B795CC0B",
 				"3E9B7322EFA729397523C1CC",
+				"C1B6F5D1560E171C0E4B78F1",
 				"0AA9053CFE1D196E10279F64",
 				"0E53DF55B3626FA6808D95CD",
 				"A68D6B3443705A9FC0110128",

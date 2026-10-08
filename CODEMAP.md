@@ -20,9 +20,11 @@
 
 ## iOS入力・変換
 - Primary paths: [KeyboardViewController](KeyboardExtension/KeyboardViewController.swift)、[Composition](Core/InputEngine/Composition.swift)、[FlickMap](Core/InputEngine/FlickMap.swift)、[AzooKeyConversion](KeyboardExtension/Input/AzooKeyConversion.swift)
-- Search keywords: `DocumentIdentity`、`KeyboardLifecycle`、`requireJapanesePrediction`、`WordReconversion`、`showsCandidates`、`LiveTextSession`、`setMarkedText`、`updateCandidates`、`revision`、`correspondingCount`、`repeatDelete`、`startReconversion`
+- Search keywords: `DocumentIdentity`、`KeyboardLifecycle`、`requireJapanesePrediction`、`CharacterCatalog`、`CharacterPickerView`、`RecentCharacters`、`WordReconversion`、`showsCandidates`、`LiveTextSession`、`setMarkedText`、`updateCandidates`、`revision`、`correspondingCount`、`repeatDelete`、`startReconversion`
 - Key entry points: UIInputViewController、input、commit
 - Related tests: [Coreテスト](Tests/Unit/KeyboardCoreTests.swift)、[Mac課題](docs/07-TESTING-AND-ISSUES.md)
+
+絵文字/記号一覧: [CharacterCatalog](Core/InputEngine/CharacterCatalog.swift)、[CharacterPickerView](KeyboardExtension/Views/CharacterPickerView.swift)、[UI検証](Tests/Integration/CharacterPickerTests.swift)。
 
 ## 設定・辞書・履歴
 - Primary paths: [本体](App/MyKeyboardApp.swift)、[PreferencesStore](Storage/Preferences/PreferencesStore.swift)、[UserDictionaryStore](Storage/Dictionary/UserDictionaryStore.swift)、[ClipboardStore](Storage/Clipboard/ClipboardStore.swift)

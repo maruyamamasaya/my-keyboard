@@ -29,5 +29,5 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify.ps1
 
 ## Mac側のFull
 `swift test`、Xcodeビルド・StorageTests・対象操作を検証する。コマンドの正本は [Mac手順](docs/08-MAC-VALIDATION.md)。
-Core25単体テストとStorage/marked textの14統合テストをMac/Simulatorで実行済み。候補表示の旧設定移行、単語境界・修正、UITextViewのmarked text更新・単語修正・確定・取消、文書IDがnilのObjective-C getter、オフライン予測と通常変換・ユーザー辞書、日本語/英語/記号の各20回のコントローラー再表示と20回のmarked text確定を含む。UIKit入力欄のinputViewへ接続した300ptの実表示・キー寸法試験、本体プレビューの3配列・ネイティブキー表示試験も含む。これらは実機のExtension表示・実際のキーボード切り替え試験ではない。実機ホストの通知・入力互換性は別途検証する。
+Core27単体テストとStorage/marked text/一覧画面の16統合テストをMac/Simulatorで実行済み。候補表示の旧設定移行、単語境界・修正、UITextViewのmarked text更新・単語修正・確定・取消、文書IDがnilのObjective-C getter、オフライン予測と通常変換・ユーザー辞書、日本語/英語/記号の各20回のコントローラー再表示と20回のmarked text確定を含む。UIKit入力欄のinputViewへ接続した300ptの実表示・キー寸法試験、本体プレビューの3配列・ネイティブキー表示試験も含む。絵文字/記号のカテゴリ切替、複合文字列の挿入、最近使った項目の分離/復帰、一覧からかな/記号キーへ戻る操作も含む。これらは実機のExtension表示・実際のキーボード切り替え試験ではない。実機ホストの通知・入力互換性は別途検証する。
 lint/format専用ツール、E2E自動化、実測性能基準は未整備。WindowsのVerify成功はSwift型検査やアプリ品質の保証ではない。

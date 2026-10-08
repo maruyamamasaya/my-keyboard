@@ -36,3 +36,5 @@ root/          共通ルール・現在地・各分野の案内
 検索入口は [CODEMAP.md](CODEMAP.md)、運用の正本は [OPERATIONS.md](OPERATIONS.md)。
 
 入力ルートはKeyboardViewController内のKeyboardInputView。allowsSelfSizingを有効にし、intrinsicContentSizeとsystemLayoutSizeFittingでCoreの高さ300を返す。本体の説明も同じ値を使う。
+
+絵文字・記号の同梱Unicode一覧と最近使った項目はCore/InputEngine/CharacterCatalog.swift。KeyboardExtension/Views/CharacterPickerView.swiftがカテゴリと再利用セルを表示し、controllerが未確定入力を確定して直接挿入する。

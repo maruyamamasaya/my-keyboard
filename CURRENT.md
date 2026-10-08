@@ -30,3 +30,7 @@
 英語キー16ptのrounded書体、コード記号17ptの等幅書体へ変更。記号は ://・@・バッククオート等を優先。[記録](sessions/2026-10-08-latin-code-symbols.md)。
 
 本体プレビューを実キー部品・共通寸法へ差し替え、かな/英語/記号の表示切替を追加。Windows 98/XP/Vista/7風テーマを追加。[記録](sessions/2026-10-08-native-preview-windows.md)。
+
+絵文字・記号一覧を追加。絵文字8カテゴリ、記号7カテゴリ、タブ/スクロール/最近使った項目（controller生存中40件）を利用可能。Release版をVesperaへインストール・本体起動成功。実機の一覧操作は未検証。[実装記録](sessions/2026-10-09-character-picker.md)、[導入記録](sessions/2026-10-09-character-picker-deploy.md)。
+
+上部ボタンをコピー・カーソル左・カーソル右へ整理。下部の絵文字/配列切替と右端の閉じるボタンを保持。本体プレビューも更新。Release版をVesperaへ更新・本体起動成功。[記録](sessions/2026-10-09-simple-toolbar.md)。

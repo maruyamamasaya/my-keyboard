@@ -14,7 +14,7 @@ struct SettingsView: View {
             }
             Section("変換候補") {
                 Toggle("候補を表示", isOn: $model.preferences.showsCandidates)
-                Text("既定は表示。キーボードの目のアイコンでも一時的に切り替えられます。単語の再変換中は候補を表示します。")
+                Text("既定は表示。候補の表示・非表示はこの設定で切り替えられます。")
             }
             Section("変換学習") {
                 Toggle("候補の選好を端末に保存", isOn: $model.preferences.learningEnabled)
