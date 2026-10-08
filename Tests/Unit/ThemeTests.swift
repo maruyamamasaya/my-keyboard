@@ -1,0 +1,39 @@
+import XCTest
+@testable import KeyboardCore
+
+final class ThemeTests: XCTestCase {
+    func testDefaultMigrationAndUnknownPreset() {
+        XCTAssertEqual(ThemeSelection().presetID, "blue-cosmos")
+        XCTAssertEqual(ThemeSelection.migrating(.system).presetID, "blue-cosmos")
+        XCTAssertEqual(ThemeSelection.migrating(.light).presetID, "minimal-light")
+        XCTAssertEqual(ThemeSelection.migrating(.dark).presetID, "minimal-dark")
+        XCTAssertEqual(ThemeCatalog.preset("future-theme"), ThemeCatalog.blueCosmos)
+    }
+    func testAppearanceRoundTripDoesNotChangeLayout() throws {
+        var preferences = KeyboardPreferences(); preferences.portrait.alignment = .left
+        let before = preferences
+        var selection = ThemeSelection(); selection.presetID = "pulse-neon"; selection.custom = ThemeCatalog.blueCosmos.tokens
+        let decoded = try JSONDecoder().decode(ThemeSelection.self, from: JSONEncoder().encode(selection))
+        XCTAssertEqual(decoded, selection); XCTAssertEqual(preferences, before)
+        let old = try JSONDecoder().decode(KeyboardPreferences.self, from: JSONEncoder().encode(preferences))
+        XCTAssertEqual(old, before)
+    }
+    func testInvalidValuesAndContrastAreSafe() {
+        var tokens = ThemeCatalog.blueCosmos.tokens
+        tokens.background = "url(remote)"; tokens.cornerRadius = .infinity; tokens.opacity = .nan
+        tokens.key = "#FFFFFF"; tokens.text = "#FFFFFF"
+        let safe = tokens.readable
+        XCTAssertEqual(safe.background, "#081426"); XCTAssertEqual(safe.cornerRadius, 10)
+        XCTAssertEqual(safe.opacity, 1); XCTAssertEqual(safe.text, "#000000")
+        tokens.key = "#000000"; tokens.background = "#FFFFFF"; tokens.opacity = 0.65; tokens.text = "#000000"
+        XCTAssertEqual(tokens.readable.text, "#FFFFFF"); XCTAssertEqual(tokens.readable.opacity, 1)
+    }
+    func testImageReferencesCannotEscapeStorage() {
+        var selection = ThemeSelection()
+        for name in ["../photo.jpg", "/tmp/photo.jpg", "https://example.com/a.jpg", "a.png", "photo.jpg"] {
+            selection.imageName = name; XCTAssertNil(selection.safeImageName)
+        }
+        let name = UUID().uuidString + ".jpg"; selection.imageName = name
+        XCTAssertEqual(selection.safeImageName, name)
+    }
+}
