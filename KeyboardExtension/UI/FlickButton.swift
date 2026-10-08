@@ -1,6 +1,8 @@
 import UIKit
 import KeyboardCore
 
+enum FlickTypography { case kana, latin, code }
+
 final class FlickButton: UIControl {
     let key: FlickKey
     var onCommit: ((String) -> Void)?
@@ -20,13 +22,21 @@ final class FlickButton: UIControl {
         relief.locations = [0, 0.45, 1]
         for label in guides { label.textColor = UIColor(themeHex: tokens.text); label.alpha = strong ? 1 : 0.45 }
     }
-    init(key: FlickKey) {
+    init(key: FlickKey, typography: FlickTypography = .kana) {
         self.key = key
         super.init(frame: .zero)
         layer.insertSublayer(relief, at: 0)
         backgroundColor = .secondarySystemBackground
         layer.cornerRadius = 6
-        title.text = key.label; title.font = .systemFont(ofSize: 20, weight: .light)
+        title.text = key.label
+        switch typography {
+        case .kana: title.font = .systemFont(ofSize: 20, weight: .light)
+        case .latin:
+            let font = UIFont.systemFont(ofSize: 16, weight: .medium)
+            title.font = UIFont(descriptor: font.fontDescriptor.withDesign(.rounded) ?? font.fontDescriptor, size: 16)
+        case .code: title.font = .monospacedSystemFont(ofSize: 17, weight: .regular)
+        }
+        title.adjustsFontSizeToFitWidth = true; title.minimumScaleFactor = 0.6
         title.textAlignment = .center; title.translatesAutoresizingMaskIntoConstraints = false
         addSubview(title)
         for index in 1...4 {
@@ -35,7 +45,7 @@ final class FlickButton: UIControl {
             label.alpha = 0.45; label.isAccessibilityElement = false
             addSubview(label); guides.append(label)
         }
-        NSLayoutConstraint.activate([title.centerXAnchor.constraint(equalTo: centerXAnchor), title.centerYAnchor.constraint(equalTo: centerYAnchor)])
+        NSLayoutConstraint.activate([title.centerXAnchor.constraint(equalTo: centerXAnchor), title.centerYAnchor.constraint(equalTo: centerYAnchor), title.widthAnchor.constraint(lessThanOrEqualTo: widthAnchor, constant: -8)])
         isAccessibilityElement = true; accessibilityLabel = key.label; accessibilityTraits = .button
         accessibilityCustomActions = key.characters.enumerated().filter { !$0.element.isEmpty }.map { index, text in
             UIAccessibilityCustomAction(name: text) { [weak self] _ in
@@ -58,7 +68,7 @@ final class FlickButton: UIControl {
         guides.forEach { $0.alpha = pressed || strong ? 1 : 0.45 }
         KeyboardKeyStyle.apply(self, tokens: tokens, pressed: pressed, strong: strong)
     }
-    override func accessibilityActivate() -> Bool { onCommit?(key.label); return true }
+    override func accessibilityActivate() -> Bool { onCommit?(key.text(.center)); return true }
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         origin = touch.location(in: self); direction = .center; feedback(true)

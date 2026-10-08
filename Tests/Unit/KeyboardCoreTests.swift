@@ -47,6 +47,25 @@ final class KeyboardCoreTests: XCTestCase {
         state.modifyPreviousKana(); XCTAssertEqual(state.reading, "は")
         XCTAssertEqual(KanaModifier.katakana("がっこう ABC😀"), "ガッコウ ABC😀")
     }
+    func testEnglishLayoutAndSingleCharacterInput() {
+        let keys = FlickMap.english(uppercase: false)
+        XCTAssertEqual(keys.map(\.label), ["@#/&_", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz", "a/A", "'\"()", ".,?!"])
+        XCTAssertEqual(keys[0].text(.down), "_")
+        XCTAssertEqual(keys[1].text(.center), "a")
+        XCTAssertEqual(keys[6].text(.right), "s")
+        XCTAssertEqual(FlickMap.english(uppercase: true)[1].text(.up), "C")
+        XCTAssertEqual(keys[10].text(.right), ")")
+    }
+    func testEngineeringSymbolsIncludeURLAndCodeTokens() {
+        let keys = FlickMap.engineeringSymbols
+        XCTAssertEqual(keys.count, 12)
+        XCTAssertEqual(Array(keys.prefix(3)).map(\.label), ["://", "@", "`"])
+        XCTAssertEqual(keys[0].text(.center), "://")
+        XCTAssertEqual(keys[0].text(.down), "https://")
+        XCTAssertEqual(keys[2].text(.right), "\\")
+        let tokens = Set(keys.flatMap(\.characters))
+        XCTAssertTrue(Set(["＠", "{", "}", "[", "]", "(", ")", "$", ";", "_", "=", "|"]).isSubset(of: tokens))
+    }
     func testFlickThresholdAndEmptyDirection() {
         XCTAssertEqual(FlickMap.direction(dx: 2, dy: -10), .center)
         XCTAssertEqual(FlickMap.direction(dx: -30, dy: 5), .left)

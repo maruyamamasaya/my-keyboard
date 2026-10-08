@@ -159,6 +159,9 @@ import KeyboardCore
             guard let self else { return }; self.showsCandidates.toggle(); self.render()
         }
         candidateVisibilityButton = visibility; toolbar.addArrangedSubview(visibility)
+        toolbar.addArrangedSubview(button("あA", role: .toolbar) { [weak self] in
+            guard let self else { return }; self.switchMode(self.mode == 0 ? 1 : 0)
+        })
         toolbar.addArrangedSubview(button("✦ 履歴", role: .toolbar) { [weak self] in self?.showClipboard() })
         toolbar.addArrangedSubview(button("←", role: .toolbar) { [weak self] in self?.moveCursor(-1) })
         toolbar.addArrangedSubview(button("→", role: .toolbar) { [weak self] in self?.moveCursor(1) })
@@ -305,12 +308,11 @@ import KeyboardCore
         clear(grid)
         var keys = FlickMap.japanese
         if mode == 1 {
-            keys = ["abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz", "@_-", "⇧", ".,/", "!?'"]
-                .map { value in FlickKey(value == "⇧" ? [value] : value.map { uppercase ? String($0).uppercased() : String($0) }) }
+            keys = FlickMap.english(uppercase: uppercase)
         } else if mode == 2 {
             keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "-"].map { FlickKey([$0]) }
         } else if mode == 3 {
-            keys = ["!", "?", "#", "(", ")", "[", "]", "@", "+", "=", "_", "/"].map { FlickKey([$0]) }
+            keys = FlickMap.engineeringSymbols
         }
         let spacing = preferences.profile(landscape: landscape).spacing
         func column() -> UIStackView {
@@ -324,12 +326,24 @@ import KeyboardCore
             left.widthAnchor.constraint(equalTo: right.widthAnchor),
             center.widthAnchor.constraint(equalTo: left.widthAnchor, multiplier: 3, constant: spacing * 2)
         ])
-        left.addArrangedSubview(button("記号") { [weak self] in self?.switchMode(3) })
-        left.addArrangedSubview(button("123") { [weak self] in self?.switchMode(2) })
-        left.addArrangedSubview(button("あA") { [weak self] in
-            guard let self else { return }; self.switchMode(self.mode == 0 ? 1 : 0)
-        })
-        left.addArrangedSubview(button("☺") { [weak self] in self?.switchMode(4) })
+        if mode == 1 {
+            left.distribution = .fill
+            let cursor = button("→") { [weak self] in self?.moveCursor(1) }
+            let cancel = button("取消") { [weak self] in self?.cancelComposition() }
+            let symbols = button("☆123") { [weak self] in self?.switchMode(2) }
+            left.addArrangedSubview(cursor); left.addArrangedSubview(cancel); left.addArrangedSubview(symbols)
+            NSLayoutConstraint.activate([
+                cursor.heightAnchor.constraint(equalTo: cancel.heightAnchor),
+                symbols.heightAnchor.constraint(equalTo: cursor.heightAnchor, multiplier: 2, constant: spacing)
+            ])
+        } else {
+            left.addArrangedSubview(button("記号") { [weak self] in self?.switchMode(3) })
+            left.addArrangedSubview(button("123") { [weak self] in self?.switchMode(2) })
+            left.addArrangedSubview(button("あA") { [weak self] in
+                guard let self else { return }; self.switchMode(self.mode == 0 ? 1 : 0)
+            })
+            left.addArrangedSubview(button("☺") { [weak self] in self?.switchMode(4) })
+        }
         if mode == 4 {
             keys = ["😀", "😊", "🥰", "😂", "😎", "🥲", "👍", "🙏", "❤️", "✨", "🎉", "🌸"].map { FlickKey([$0]) }
         }
@@ -337,7 +351,7 @@ import KeyboardCore
             let row = UIStackView(); row.axis = .horizontal; row.distribution = .fillEqually; row.spacing = spacing
             row.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
             for key in keys[(rowIndex * 3)..<(rowIndex * 3 + 3)] {
-                let control = FlickButton(key: key)
+                let control = FlickButton(key: key, typography: mode == 1 ? .latin : mode == 3 ? .code : .kana)
                 control.applyTheme(appearance.tokens, strong: strongAppearance)
                 control.onCommit = { [weak self] in self?.input($0) }
                 row.addArrangedSubview(control)

@@ -3,8 +3,10 @@ import Foundation
 public enum FlickDirection: Int, Sendable { case center, left, up, right, down }
 public struct FlickKey: Sendable {
     public let characters: [String]
-    public var label: String { characters[0] }
-    public init(_ characters: [String]) { self.characters = characters }
+    public let label: String
+    public init(_ characters: [String], label: String? = nil) {
+        self.characters = characters; self.label = label ?? characters[0]
+    }
     public func text(_ direction: FlickDirection) -> String {
         characters.indices.contains(direction.rawValue) ? characters[direction.rawValue] : ""
     }
@@ -17,6 +19,19 @@ public enum FlickMap {
         FlickKey(["ま", "み", "む", "め", "も"]), FlickKey(["や", "", "ゆ", "", "よ"]), FlickKey(["ら", "り", "る", "れ", "ろ"]),
         FlickKey(["゛小", "", "", "", ""]), FlickKey(["わ", "を", "ん", "ー", "〜"]), FlickKey(["、", "。", "？", "！", "…"])
     ]
+    public static let engineeringSymbols = [
+        FlickKey(["://", ":", ".", "/", "https://"]), FlickKey(["@", "#", "＠", "&", "_"]), FlickKey(["`", "'", "\"", "\\", "|"]),
+        FlickKey(["/", "\\", ":", ".", "?"]), FlickKey(["{", "}", "<", ">", "$"]), FlickKey(["}", "{", "[", "]", "~"]),
+        FlickKey(["[", "]", "<", "{", "!"]), FlickKey(["]", "[", ">", "}", "#"]), FlickKey(["(", ")", "?", "!", "^"]),
+        FlickKey([")", "(", "*", "%", "&"]), FlickKey(["=", "+", "-", "*", "/"]), FlickKey([";", ":", "_", "$", ","])
+    ]
+    public static func english(uppercase: Bool) -> [FlickKey] {
+        ["@#/&_", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz", "⇧", "'\"()", ".,?!"].map { group in
+            if group == "⇧" { return FlickKey([group], label: "a/A") }
+            let letters = uppercase ? group.uppercased() : group
+            return FlickKey(letters.map { String($0) }, label: letters)
+        }
+    }
     public static func direction(dx: Double, dy: Double, threshold: Double = 18) -> FlickDirection {
         guard max(abs(dx), abs(dy)) >= threshold else { return .center }
         if abs(dx) > abs(dy) { return dx < 0 ? .left : .right }
