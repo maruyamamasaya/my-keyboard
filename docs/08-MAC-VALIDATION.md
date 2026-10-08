@@ -45,7 +45,7 @@ xcodebuild -project MyKeyboard.xcodeproj -scheme MyKeyboard -destination 'platfo
 ```
 Apple SiliconのSimulatorでx86_64リンク失敗が出る場合は、上のtestに `ONLY_ACTIVE_ARCH=YES ARCHS=arm64` を追加して検証する。
 
-`swift test` は共通ロジック・テーマ・ライブ変換・単語再変換の20テスト。schemeのStorageTestsはSQLite Swiftラッパー・テーマ保存・UIKit marked textの13テスト。Pythonテストはこれらを代替しない。
+`swift test` は共通ロジック・テーマ・ライブ変換・単語再変換・英語配列・技術用記号の24テスト。schemeのStorageTestsはSQLite Swiftラッパー・テーマ保存・UIKit marked textの13テスト。Pythonテストはこれらを代替しない。
 テストbundleのschema.sql存在を確認。Resources/PrivacyInfo.xcprivacy、ThirdPartyNotices.txtが本体と拡張に含まれることも確認する。
 ビルドエラーはT-001等へ記録し、修正後に同じ構成で再実行する。
 
