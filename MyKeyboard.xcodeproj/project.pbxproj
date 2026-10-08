@@ -701,6 +701,16 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "0E53DF55B3626FA6808D95CD";
 		};
+		"A68D6B3443705A9FC0110128" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "Tests/Integration/KeyboardLifecycleTests.swift";
+			"sourceTree" = "<group>";
+		};
+		"1297352DB2DBE49198B0FB47" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "A68D6B3443705A9FC0110128";
+		};
 		"6985C629D2062D1F02DDC416" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
@@ -759,12 +769,37 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "9D0ECA50F6481261086883F5";
 		};
+		"8801CE3528F43AD1F8574D1E" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "9CFB932CE2D1DB03DB22F4A2";
+		};
+		"623A6515094465538773BCC9" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "EA05BA0C4532BDD72DAFDB0A";
+		};
+		"875EB9BCCD03204FD6A2DB4B" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "2B0E63975C8E0AB90792C07E";
+		};
+		"ED96379928752CCFC484F747" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "EE6D21D63D316C8FB4C99D44";
+		};
+		"027294FD1F6D722739CF1619" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "4427E92E72E8B1BCF846FDD6";
+		};
+		"B1720B9F3430288E32282301" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "60EF87592DAB7A3A9025B13F";
+		};
 		"EC825048AFAD18ABBC72FEF8" = {
 			"isa" = "PBXSourcesBuildPhase";
 			"buildActionMask" = 2147483647;
 			"files" = (
 				"A2ADEF517776CE1ED0DC589B",
 				"E6F277847349C794160F721C",
+				"1297352DB2DBE49198B0FB47",
 				"1D02F7D38AE7F6DD475594EB",
 				"46D61F24433470D61085F661",
 				"5215DDA5A6CEC64EBB61E6CE",
@@ -775,6 +810,12 @@
 				"5262043FF96C7C24DCDFF3F9",
 				"17161BB6696A93DB44B2CA39",
 				"CB9FC755578A8D06DEC4740F",
+				"8801CE3528F43AD1F8574D1E",
+				"623A6515094465538773BCC9",
+				"875EB9BCCD03204FD6A2DB4B",
+				"ED96379928752CCFC484F747",
+				"027294FD1F6D722739CF1619",
+				"B1720B9F3430288E32282301",
 			);
 			"runOnlyForDeploymentPostprocessing" = 0;
 		};
@@ -968,6 +1009,7 @@
 				"3E9B7322EFA729397523C1CC",
 				"0AA9053CFE1D196E10279F64",
 				"0E53DF55B3626FA6808D95CD",
+				"A68D6B3443705A9FC0110128",
 				"6985C629D2062D1F02DDC416",
 				"1C736DD61410C877A4A3B3B3",
 				"5B91F8CA3A05B3B370F7FBA9",

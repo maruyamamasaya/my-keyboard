@@ -26,14 +26,14 @@ class ThemeStructureTests(unittest.TestCase):
                 self.assertGreaterEqual(contrast(background, text), 4.5)
                 self.assertGreaterEqual(contrast(background, accent), 4.5)
 
-    def test_design_sources_belong_to_both_products_only(self):
+    def test_design_sources_belong_to_products_and_ui_tests(self):
         objects = generator.project_model()["objects"]
         expected = {p.relative_to(ROOT).as_posix() for p in (ROOT / "DesignSystem").rglob("*.swift")}
         self.assertTrue(expected)
         for name in ("MyKeyboard", "MyKeyboardExtension", "StorageTests"):
             phase = objects[generator.uid("sources:" + name)]
             paths = {objects[objects[build]["fileRef"]]["path"] for build in phase["files"]}
-            self.assertEqual(paths & expected, expected if name != "StorageTests" else set())
+            self.assertEqual(paths & expected, expected)
             self.assertIn("Storage/Preferences/ThemeStore.swift", paths)
 
     def test_appearance_has_no_input_dependencies(self):

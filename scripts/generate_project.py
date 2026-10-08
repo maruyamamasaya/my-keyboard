@@ -71,7 +71,7 @@ def project_model():
         if name != "StorageTests":
             source_paths += design
         else:
-            source_paths += ["KeyboardExtension/Input/AzooKeyConversion.swift"]
+            source_paths += sorted(str(p.relative_to(ROOT)).replace("\\", "/") for p in (ROOT / "KeyboardExtension").rglob("*.swift")) + design
         source_build = [add(f"source:{name}:{p}", "PBXBuildFile", fileRef=file(p)) for p in source_paths]
         source_phase = add("sources:" + name, "PBXSourcesBuildPhase", buildActionMask=2147483647, files=source_build, runOnlyForDeploymentPostprocessing=0)
         target_resources = resources + (["App/Assets.xcassets"] if name == "MyKeyboard" else [])

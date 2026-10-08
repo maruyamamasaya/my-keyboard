@@ -45,6 +45,19 @@ final class LiveMarkedTextTests: XCTestCase {
             XCTAssertNil(client.view.markedTextRange)
         }
     }
+    func testTwentyMarkedSessionsCommitWithoutCarryover() async {
+        await MainActor.run {
+            let client = TextViewClient(), session = LiveTextSession()
+            for cycle in 1...20 {
+                XCTAssertTrue(session.update("きょう", cursorUTF16: 3, using: client))
+                XCTAssertTrue(session.update("今日", cursorUTF16: 2, using: client))
+                XCTAssertTrue(session.finish("今日", using: client))
+                XCTAssertFalse(session.isActive)
+                XCTAssertNil(client.view.markedTextRange)
+                XCTAssertEqual(client.view.text, "前" + String(repeating: "今日", count: cycle) + "後")
+            }
+        }
+    }
     func testUIKitCancellationRemovesOnlyOwnedMarkedText() async {
         await MainActor.run {
             let client = TextViewClient(), session = LiveTextSession()

@@ -17,7 +17,7 @@ Xcodeプロジェクトは `python scripts/generate_project.py` でソースか�
 - 新しい実行環境やサービスを導入したら、必要な環境変数名と準備手順をここに追記する。秘密値は保存しない。
 
 ## キーボード消失の調査
-- macOS ConsoleでVesperaを選び、subsystem `maruyama.MyKeyboard` / category `KeyboardLifecycle` を絞り込む。表示・終了・明示的な閉じる操作・memory warning・文書ID欠落を記録する。入力本文・候補・文書IDはログへ出さない。
+- macOS ConsoleでVesperaを選び、subsystem `maruyama.MyKeyboard` / category `KeyboardLifecycle` を絞り込む。viewDidLoad/willAppear/didAppear/willDisappear/didDisappear・コントローラー識別子・表示寸法・入力モード・明示的な閉じる操作・memory warning・文書ID欠落を記録する。入力本文・候補・文書IDはログへ出さない。
 - 実機の通常確認はRelease版を使用する。固定版OSSのDEBUG出力には入力内容が含まれるため、Debug版の入力はテスト文字列に限定する。
 - クラッシュ一覧: `xcrun devicectl device info files --device Vespera --domain-type systemCrashLogs`。
 - 該当するMyKeyboardExtensionのipsだけを `xcrun devicectl device copy from --device Vespera --domain-type systemCrashLogs --source <該当ファイル名> --destination /private/tmp/keyboard-crash.ips` で取得する。生ログはGitへ保存しない。

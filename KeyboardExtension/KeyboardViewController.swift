@@ -4,6 +4,7 @@ import KeyboardCore
 
 @MainActor final class KeyboardViewController: UIInputViewController {
     private let lifecycleLog = Logger(subsystem: "maruyama.MyKeyboard", category: "KeyboardLifecycle")
+    private let lifecycleID = UUID().uuidString
     private var composition = Composition()
     private let liveSession = LiveTextSession()
     private var wordReconversion: WordReconversion?
@@ -68,6 +69,7 @@ import KeyboardCore
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        lifecycleLog.info("View loaded: controller=\(self.lifecycleID, privacy: .public)")
         primaryLanguage = "ja-JP"
         view.backgroundColor = .systemBackground
         cosmos.translatesAutoresizingMaskIntoConstraints = false
@@ -172,14 +174,14 @@ import KeyboardCore
             clipboardPanel.leadingAnchor.constraint(equalTo: grid.leadingAnchor), clipboardPanel.trailingAnchor.constraint(equalTo: grid.trailingAnchor),
             clipboardPanel.topAnchor.constraint(equalTo: grid.topAnchor), clipboardPanel.bottomAnchor.constraint(equalTo: grid.bottomAnchor)
         ])
-        heightConstraint = view.heightAnchor.constraint(equalToConstant: 360)
+        heightConstraint = view.heightAnchor.constraint(equalToConstant: 340)
         heightConstraint?.priority = .defaultHigh; heightConstraint?.isActive = true
         buildGrid()
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        lifecycleLog.info("Keyboard appearing")
+        lifecycleLog.info("Keyboard appearing: controller=\(self.lifecycleID, privacy: .public), mode=\(self.mode)")
         preferences = (try? PreferencesStore())?.load() ?? .init()
         showsCandidates = preferences.showsCandidates
         let themeStore = try? ThemeStore()
@@ -198,10 +200,18 @@ import KeyboardCore
         updateReturnKey()
     }
     override func viewWillDisappear(_ animated: Bool) {
-        lifecycleLog.info("Keyboard disappearing")
+        lifecycleLog.info("Keyboard disappearing: controller=\(self.lifecycleID, privacy: .public)")
         commitReading(); stopActivity(); cancelComposition(); conversion?.close(); closeClipboard()
         recent = nil
         super.viewWillDisappear(animated)
+    }
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        lifecycleLog.info("Keyboard visible: controller=\(self.lifecycleID, privacy: .public), width=\(Double(self.view.bounds.width)), height=\(Double(self.view.bounds.height))")
+    }
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        lifecycleLog.info("Keyboard hidden: controller=\(self.lifecycleID, privacy: .public)")
     }
     override func didReceiveMemoryWarning() {
         lifecycleLog.warning("Keyboard received memory warning")
@@ -223,7 +233,7 @@ import KeyboardCore
 
     private func applyLayout() {
         let profile = preferences.profile(landscape: landscape)
-        heightConstraint?.constant = 360
+        heightConstraint?.constant = 340
         grid.spacing = profile.spacing
         overrideUserInterfaceStyle = appearance.tokens.dark ? .dark : .light
         // Alignment and width are expressed by frame constraints; no orientation-specific fixed screen size.
@@ -240,7 +250,8 @@ import KeyboardCore
         case .right: alignment = bodyStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -4)
         }
         alignmentConstraint = alignment; alignment.isActive = true
-        buildGrid()
+        // The fixed grid already exists; reuse it on reappearance and rotation.
+        updateReturnKey()
     }
     private func button(_ title: String, role: KeyboardKeyRole = .utility, _ action: @escaping () -> Void) -> UIButton {
         let button = KeyboardActionButton(frame: .zero); button.keyRole = role
