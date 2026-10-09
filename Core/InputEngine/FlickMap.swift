@@ -25,6 +25,21 @@ public enum FlickMap {
         FlickKey(["[", "]", "<", "{", "!"]), FlickKey(["]", "[", ">", "}", "#"]), FlickKey(["(", ")", "?", "!", "^"]),
         FlickKey([")", "(", "*", "%", "&"]), FlickKey(["=", "+", "-", "*", "/"]), FlickKey([";", ":", "_", "$", ","])
     ]
+    /// Markdown, code operators, and shell fragments; center, left, up, right, down.
+    public static let developerSymbols = [
+        FlickKey(["# ", "## ", "### ", "#### ", "> "], label: "#"),
+        FlickKey(["**", "*", "__", "_", "~~"]),
+        FlickKey(["```", "`", "```swift\n", "```sh\n", "```json\n"]),
+        FlickKey(["- ", "* ", "1. ", "- [ ] ", "- [x] "], label: "- [ ]"),
+        FlickKey(["[]()", "![]()", "[]", "()", "{}"]),
+        FlickKey(["---", "***", "___", "<!--", "-->"]),
+        FlickKey(["=>", "->", "<-", "::", "..."]),
+        FlickKey(["==", "!=", "===", "!==", ":="]),
+        FlickKey(["&&", "||", "??", "?.", "!!"]),
+        FlickKey(["../", "./", "~/", "../../", "/"]),
+        FlickKey(["--", " -", " --", "=", "$ "]),
+        FlickKey(["|", " > ", " >> ", " < ", " 2>&1"])
+    ]
     public static func english(uppercase: Bool) -> [FlickKey] {
         ["@#/&_", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz", "⇧", "'\"()", ".,?!"].map { group in
             if group == "⇧" { return FlickKey([group], label: "a/A") }

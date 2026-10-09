@@ -59,6 +59,12 @@ public struct Composition: Sendable {
 }
 
 public enum KanaModifier {
+    /// Romanize the kana reading, preserving punctuation and non-kana text.
+    public static func romaji(_ text: String) -> String {
+        let latin = text.applyingTransform(.toLatin, reverse: false) ?? text
+        return latin.applyingTransform(.stripDiacritics, reverse: false) ?? latin
+    }
+
     private static let cycles = ["あぁ", "いぃ", "うぅゔ", "えぇ", "おぉ", "かが", "きぎ", "くぐ", "けげ", "こご",
         "さざ", "しじ", "すず", "せぜ", "そぞ", "ただ", "ちぢ", "つっづ", "てで", "とど",
         "はばぱ", "ひびぴ", "ふぶぷ", "へべぺ", "ほぼぽ", "やゃ", "ゆゅ", "よょ", "わゎ"]

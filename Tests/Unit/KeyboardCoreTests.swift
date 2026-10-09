@@ -2,6 +2,27 @@ import XCTest
 @testable import KeyboardCore
 
 final class KeyboardCoreTests: XCTestCase {
+    func testHapticsDefaultAndStoredOptOutPreserveOtherSettings() throws {
+        let legacy = Data(#"{"learningEnabled":true,"clipboardLimit":80}"#.utf8)
+        let migrated = try JSONDecoder().decode(KeyboardPreferences.self, from: legacy)
+        XCTAssertTrue(migrated.hapticsEnabled)
+        XCTAssertTrue(migrated.learningEnabled)
+        XCTAssertEqual(migrated.clipboardLimit, 80)
+        var preferences = migrated; preferences.hapticsEnabled = false
+        let restored = try JSONDecoder().decode(KeyboardPreferences.self, from: JSONEncoder().encode(preferences))
+        XCTAssertFalse(restored.hapticsEnabled)
+        XCTAssertTrue(restored.learningEnabled)
+        XCTAssertEqual(restored.clipboardLimit, 80)
+    }
+
+    func testLiteralReadingForms() {
+        XCTAssertEqual(KanaModifier.hiragana("か"), "か")
+        XCTAssertEqual(KanaModifier.katakana("がっこう"), "ガッコウ")
+        XCTAssertEqual(KanaModifier.romaji("か"), "ka")
+        XCTAssertEqual(KanaModifier.romaji("がっこう ABC😀"), "gakkou ABC😀")
+        XCTAssertEqual(KanaModifier.romaji("きょう"), "kyou")
+    }
+
     func testPredictionIsSelectableWithoutCompletingLiveInput() {
         var state = Composition(); state.insert("きょ")
         let prediction = ConversionChoice("今日は", token: 0, isPrediction: true)
@@ -46,6 +67,17 @@ final class KeyboardCoreTests: XCTestCase {
         state.modifyPreviousKana(); XCTAssertEqual(state.reading, "ぱ")
         state.modifyPreviousKana(); XCTAssertEqual(state.reading, "は")
         XCTAssertEqual(KanaModifier.katakana("がっこう ABC😀"), "ガッコウ ABC😀")
+    }
+    func testDeveloperFragmentsPreserveWhitespaceAndAllFlickDirections() {
+        let keys = FlickMap.developerSymbols
+        XCTAssertEqual(keys.count, 12)
+        XCTAssertTrue(keys.allSatisfy { $0.characters.count == 5 })
+        XCTAssertEqual(keys[0].text(.left), "## ")
+        XCTAssertEqual(keys[2].text(.up), "```swift\n")
+        XCTAssertEqual(keys[3].text(.right), "- [ ] ")
+        XCTAssertEqual(keys[8].text(.left), "||")
+        XCTAssertEqual(keys[9].text(.right), "../../")
+        XCTAssertEqual(keys[11].text(.down), " 2>&1")
     }
     func testEnglishLayoutAndSingleCharacterInput() {
         let keys = FlickMap.english(uppercase: false)

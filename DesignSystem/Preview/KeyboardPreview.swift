@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 import KeyboardCore
 
-enum KeyboardPreviewMode: String, CaseIterable { case japanese = "かな", english = "ABC", symbols = "記号" }
+enum KeyboardPreviewMode: String, CaseIterable { case japanese = "かな", english = "ABC", symbols = "記号1", developerSymbols = "記号2" }
 
 /// Uses the same native controls and geometry as the extension; never edits host text.
 struct KeyboardPreview: View {
@@ -64,15 +64,26 @@ private final class PreviewKeyboardView: UIView {
                 candidates.addArrangedSubview(key)
             }
         }
-        header.addArrangedSubview(scroll(candidates, height: KeyboardGeometry.candidateHeight))
+        let candidateLine = UIStackView(); candidateLine.axis = .horizontal; candidateLine.spacing = 4
+        candidateLine.addArrangedSubview(scroll(candidates, height: KeyboardGeometry.candidateHeight))
+        let close = action("キーボードを閉じる", role: .candidate, symbol: "chevron.down")
+        close.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        candidateLine.addArrangedSubview(close)
+        header.addArrangedSubview(candidateLine)
         let toolbar = UIStackView(); toolbar.spacing = 4
         for (title, symbol) in [("コピー", "doc.on.clipboard"), ("左", "chevron.left"), ("右", "chevron.right")] {
             let key = action(title, role: .toolbar, symbol: symbol); key.widthAnchor.constraint(equalToConstant: 44).isActive = true; toolbar.addArrangedSubview(key)
         }
+        for title in ["かな", "カナ", "ローマ字"] {
+            let key = action(title, role: .toolbar)
+            key.accessibilityLabel = title + "変換"
+            toolbar.addArrangedSubview(key)
+        }
+        toolbar.addArrangedSubview(action("再変換", role: .toolbar, symbol: "arrow.triangle.2.circlepath"))
         let tools = UIStackView(); tools.spacing = 4
         tools.addArrangedSubview(scroll(toolbar, height: KeyboardGeometry.toolbarHeight))
-        let close = action("キーボードを閉じる", role: .toolbar, symbol: "chevron.down")
-        close.widthAnchor.constraint(equalToConstant: 44).isActive = true; tools.addArrangedSubview(close)
+        let palette = action("カラーパレット", role: .toolbar, symbol: "paintpalette")
+        palette.widthAnchor.constraint(equalToConstant: 44).isActive = true; tools.addArrangedSubview(palette)
         header.addArrangedSubview(tools); body.addArrangedSubview(header)
         let spacing = CGFloat(LayoutProfile().spacing)
         func column() -> UIStackView { let stack = UIStackView(); stack.axis = .vertical; stack.spacing = spacing; stack.distribution = .fillEqually; return stack }
@@ -83,16 +94,16 @@ private final class PreviewKeyboardView: UIView {
         if mode == .english {
             left.distribution = .fill
             let cursor = action("→"), language = action("あA"), symbols = action("☆123")
-            left.addArrangedSubview(cursor); left.addArrangedSubview(language); left.addArrangedSubview(symbols)
-            NSLayoutConstraint.activate([cursor.heightAnchor.constraint(equalTo: language.heightAnchor), symbols.heightAnchor.constraint(equalTo: cursor.heightAnchor, multiplier: 2, constant: spacing)])
+            left.addArrangedSubview(cursor); left.addArrangedSubview(symbols); left.addArrangedSubview(language)
+            NSLayoutConstraint.activate([cursor.heightAnchor.constraint(equalTo: symbols.heightAnchor), language.heightAnchor.constraint(equalTo: cursor.heightAnchor, multiplier: 2, constant: spacing)])
         } else {
-            for title in ["記号", "123", "あA", "☺"] { left.addArrangedSubview(action(title, symbol: title == "☺" ? "face.smiling" : nil)) }
+            for title in [mode == .symbols ? "記号2" : mode == .developerSymbols ? "記号1" : "記号", "123", "あA", "☺"] { left.addArrangedSubview(action(title, symbol: title == "☺" ? "face.smiling" : nil)) }
         }
-        let keys = mode == .english ? FlickMap.english(uppercase: false) : mode == .symbols ? FlickMap.engineeringSymbols : FlickMap.japanese
+        let keys = mode == .english ? FlickMap.english(uppercase: false) : mode == .symbols ? FlickMap.engineeringSymbols : mode == .developerSymbols ? FlickMap.developerSymbols : FlickMap.japanese
         for rowIndex in 0..<4 {
             let row = UIStackView(); row.spacing = spacing; row.distribution = .fillEqually
             for key in keys[(rowIndex * 3)..<(rowIndex * 3 + 3)] {
-                let view = FlickButton(key: key, typography: mode == .english ? .latin : mode == .symbols ? .code : .kana)
+                let view = FlickButton(key: key, typography: mode == .english ? .latin : (mode == .symbols || mode == .developerSymbols) ? .code : .kana)
                 view.applyTheme(tokens, strong: strong); view.isUserInteractionEnabled = false; row.addArrangedSubview(view)
             }
             center.addArrangedSubview(row)

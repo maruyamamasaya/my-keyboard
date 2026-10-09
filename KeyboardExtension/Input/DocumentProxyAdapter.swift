@@ -2,7 +2,7 @@ import UIKit
 import CoreFoundation
 import KeyboardCore
 
-@MainActor struct DocumentProxyAdapter: LiveTextClient {
+@MainActor struct DocumentProxyAdapter: LiveTextClient, CommittedTextClient {
     let proxy: any UITextDocumentProxy
     var snapshot: DocumentSnapshot {
         .init(documentID: DocumentIdentity.read(from: proxy as? NSObject), before: proxy.documentContextBeforeInput,
@@ -10,6 +10,8 @@ import KeyboardCore
     }
     func setMarkedText(_ text: String, selectedRange: NSRange) { proxy.setMarkedText(text, selectedRange: selectedRange) }
     func unmarkText() { proxy.unmarkText() }
+    func insertText(_ text: String) { proxy.insertText(text) }
+    func deleteBackward() { proxy.deleteBackward() }
     // No arbitrary range replacement exists. Check after every primitive; stop on mismatch.
     func replace(_ recent: RecentCommit, with text: String) -> Bool {
         guard recent.canReplace(in: snapshot), let before = recent.snapshot.before else { return false }

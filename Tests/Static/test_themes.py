@@ -19,7 +19,7 @@ class ThemeStructureTests(unittest.TestCase):
     def test_shipped_palettes_are_legible(self):
         source = (ROOT / "Core/Theme/ThemeTokens.swift").read_text(encoding="utf-8")
         palettes = re.findall(r'\.init\(background: "(#[A-F0-9]{6})", key: "(#[A-F0-9]{6})", text: "(#[A-F0-9]{6})", accent: "(#[A-F0-9]{6})"', source)
-        self.assertEqual(len(palettes), 5)
+        self.assertEqual(len(palettes), 3)
         for background, key, text, accent in palettes:
             with self.subTest(background=background):
                 self.assertGreaterEqual(contrast(key, text), 4.5)
@@ -35,6 +35,9 @@ class ThemeStructureTests(unittest.TestCase):
             paths = {objects[objects[build]["fileRef"]]["path"] for build in phase["files"]}
             self.assertEqual(paths & expected, expected)
             self.assertIn("Storage/Preferences/ThemeStore.swift", paths)
+            resources = objects[generator.uid("resources:" + name)]
+            resource_paths = {objects[objects[build]["fileRef"]]["path"] for build in resources["files"]}
+            self.assertIn("DesignSystem/Assets.xcassets", resource_paths)
 
     def test_appearance_has_no_input_dependencies(self):
         for folder in ("Core/Theme", "DesignSystem"):

@@ -7,7 +7,6 @@ struct ThemeGallery: View {
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 20) {
-                Text("好きなカラーを、毎日の入力に。").font(.title3).frame(maxWidth: .infinity, alignment: .leading)
                 ForEach(ThemeCatalog.presets) { preset in
                     let selection = selection(preset.id)
                     VStack(alignment: .leading, spacing: 10) {
@@ -18,14 +17,30 @@ struct ThemeGallery: View {
                                 Label(model.appearance.custom == nil && model.appearance.imageName == nil ? "選択中" : "カスタム適用中", systemImage: "checkmark.circle.fill").font(.caption)
                             }
                         }
+                        if let description = desktopDescription(preset.id) {
+                            Text(description).font(.subheadline).foregroundStyle(.secondary)
+                        }
                         KeyboardPreview(selection: selection)
+                            .clipShape(RoundedRectangle(cornerRadius: preset.id == "windows-98" ? 2 : 12))
                         Button("このカラーを適用") { model.applyTheme(selection) }.buttonStyle(.borderedProminent)
                     }.padding().background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20))
                 }
-                NavigationLink("カラーを編集") { ThemeEditor(model: model) }
-                Text("すべて端末内で利用できます。テーマはキーの配置を変更しません。") .font(.footnote)
             }.padding()
         }.navigationTitle("カラーパレット")
+    }
+    private func desktopDescription(_ id: String) -> String? {
+        switch id {
+        case "game-boy": return "グレーと液晶の緑、基板が透ける懐かしい携帯ゲーム機。"
+        case "game-boy-color-violet": return "透明なバイオレットの樹脂と、その奥に見える電子部品。"
+        case "super-famicom": return "グレーのキーと赤・黄・青・緑の操作ボタン。"
+        case "windows-31": return "青いデスクトップと、ビットマップ風の文字。"
+        case "windows-95": return "灰色の立体キーと、懐かしい青緑のデスクトップ。"
+        case "terminal": return "黒い画面に緑の等幅文字。静かなターミナル。"
+        case "windows-98": return "青緑のデスクトップと、クラシックな立体キー。"
+        case "windows-xp": return "青空と緑の丘、クリーム色のキー。"
+        case "windows-vista": return "青緑の光と、深いガラスの質感。"
+        default: return nil
+        }
     }
     private func selection(_ id: String) -> ThemeSelection { var value = ThemeSelection(); value.presetID = id; return value }
 }
@@ -52,7 +67,6 @@ struct ThemeEditor: View {
                 ThemeColorPicker(title: "キー", hex: $tokens.key)
                 ThemeColorPicker(title: "文字", hex: $tokens.text)
                 ThemeColorPicker(title: "アクセント", hex: $tokens.accent)
-                Text("文字が読みづらい組み合わせは、表示時にコントラストを補正します。") .font(.footnote)
             }
             Section {
                 Button("カラーを保存") { if model.applyTheme(preview) { dismiss() } }
@@ -85,29 +99,8 @@ struct PreviewScreen: View {
                     ForEach(KeyboardPreviewMode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                 }.pickerStyle(.segmented)
                 KeyboardPreview(selection: model.appearance, profile: LayoutProfile(), showsCandidates: model.preferences.showsCandidates, mode: mode)
-                Text("高さ・幅・フリック・変換候補の実際の動作は、iPhoneでキーボードを有効にして確認します。")
             }.padding()
         }.navigationTitle("キーボードプレビュー")
-    }
-}
-
-struct DashboardView: View {
-    @ObservedObject var model: AppModel
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                Text("あなたの言葉に、\n静かな余白を。").font(.largeTitle.bold())
-                Text("MY KEYBOARD · OFFLINE").font(.caption.weight(.semibold))
-                KeyboardPreview(selection: model.appearance, showsCandidates: model.preferences.showsCandidates)
-                NavigationLink { ThemeGallery(model: model) } label: { Label("テーマを選ぶ", systemImage: "paintpalette") }.buttonStyle(.borderedProminent)
-                NavigationLink("カラーを編集") { ThemeEditor(model: model) }
-                NavigationLink("プレビュー") { PreviewScreen(model: model) }
-                NavigationLink("キーボード設定") { SettingsView(model: model) }
-                NavigationLink("キーボードの使い方") { OnboardingView() }
-                NavigationLink("プライバシー・アプリ情報") { PrivacyInfoView() }
-                Text("文字入力・変換・テーマは端末内で処理します。入力内容を送信しません。") .font(.footnote)
-            }.padding(20)
-        }.navigationTitle("MyKeyboard")
     }
 }
 
@@ -117,20 +110,21 @@ struct PrivacyInfoView: View {
         List {
             Section("MyKeyboard") {
                 LabeledContent("バージョン", value: version)
-                Text("完全オフラインの日本語フリックキーボード")
+                LabeledContent("通信", value: "なし")
             }
             Section("端末内のデータ") {
-                Text("設定・テーマ・ユーザー辞書は本体とキーボードで共有します。学習はキーボード内に保存します。")
-                Text("クリップボード履歴は手動で保存した内容だけを扱います。コピーの常時監視は行いません。")
-                Text("サイズとキーの表現は固定です。背景・キー・文字・アクセントのカラーを変更できます。")
+                LabeledContent("設定・カラー・辞書", value: "本体とキーボードで共有")
+                LabeledContent("変換学習", value: "キーボード内に保存")
+                LabeledContent("クリップボード履歴", value: "手動保存")
+                LabeledContent("入力内容の送信", value: "なし")
             }
             Section("フルアクセス") {
-                Text("共有履歴の保存にはフルアクセスが必要です。本アプリは入力内容を送信する機能を持ちません。設定を許可しない場合も基本入力を利用する設計です。")
+                Text("キーボードから履歴を保存する場合に必要です。基本入力は許可なしで使えます。")
             }
             Section {
                 NavigationLink("使い方と有効化") { OnboardingView() }
                 NavigationLink("オープンソースライセンス") { LicenseView() }
             }
-        }.navigationTitle("プライバシー・情報")
+        }.navigationTitle("アプリ情報")
     }
 }

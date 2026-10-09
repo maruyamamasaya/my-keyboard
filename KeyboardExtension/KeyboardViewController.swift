@@ -9,17 +9,24 @@ import KeyboardCore
     override func systemLayoutSizeFitting(_ targetSize: CGSize) -> CGSize {
         CGSize(width: targetSize.width, height: CGFloat(LayoutProfile().height))
     }
+    override func systemLayoutSizeFitting(_ targetSize: CGSize, withHorizontalFittingPriority horizontalFittingPriority: UILayoutPriority, verticalFittingPriority: UILayoutPriority) -> CGSize {
+        CGSize(width: targetSize.width, height: CGFloat(LayoutProfile().height))
+    }
 }
 
-@MainActor final class KeyboardViewController: UIInputViewController {
+@MainActor class KeyboardViewController: UIInputViewController {
     private let lifecycleLog = Logger(subsystem: "maruyama.MyKeyboard", category: "KeyboardLifecycle")
     private let lifecycleID = UUID().uuidString
     private var composition = Composition()
     private let liveSession = LiveTextSession()
     private var wordReconversion: WordReconversion?
     private var wordCandidates: [ConversionChoice] = []
+    private var committedTarget: CommittedTextTarget?
+    private var committedReading = ""
+    private var committedChoices: [ConversionChoice] = []
     private var showsCandidates = true
     private var preferences = KeyboardPreferences()
+    private var typingFeedback: UIImpactFeedbackGenerator?
     private var appearance = ThemeSelection()
     private let cosmos = CosmosBackgroundView(frame: .zero)
     private var dictionary: [DictionaryEntry] = []
@@ -44,6 +51,8 @@ import KeyboardCore
     private let statusLabel = UILabel()
     private let candidateRow = UIStackView()
     private let globe = UIButton(type: .system)
+    private let palettePanel = UIStackView()
+    private var temporaryAppearance: ThemeSelection?
     private let clipboardPanel = UIStackView()
     private var clipboard: ClipboardStore?
     private var clipboardDraft: String?
@@ -62,6 +71,7 @@ import KeyboardCore
     @objc private func applyAppearance() {
         view.backgroundColor = UIColor(themeHex: appearance.tokens.background)
         clipboardPanel.backgroundColor = UIColor(themeHex: appearance.tokens.background)
+        palettePanel.backgroundColor = UIColor(themeHex: appearance.tokens.background)
         cosmos.tokens = appearance.tokens
         statusLabel.textColor = UIColor(themeHex: appearance.tokens.canvasText)
         func visit(_ parent: UIView) {
@@ -71,7 +81,7 @@ import KeyboardCore
                 visit(child)
             }
         }
-        visit(bodyStack); visit(clipboardPanel)
+        visit(bodyStack); visit(clipboardPanel); visit(palettePanel)
         characterPicker?.applyTheme(appearance.tokens)
         globe.backgroundColor = .clear; globe.layer.borderWidth = 0; globe.layer.shadowOpacity = 0
         globe.tintColor = UIColor(themeHex: appearance.tokens.canvasAccent)
@@ -104,11 +114,16 @@ import KeyboardCore
         view.addSubview(bodyStack)
         NSLayoutConstraint.activate([
             bodyStack.topAnchor.constraint(equalTo: view.topAnchor, constant: CGFloat(KeyboardGeometry.topInset)),
-            bodyStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -CGFloat(KeyboardGeometry.bottomInset)),
+            bodyStack.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -CGFloat(KeyboardGeometry.bottomInset)),
             bodyStack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             bodyStack.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 4),
             bodyStack.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -4)
         ])
+        // Hosts can temporarily supply an oversized input view during keyboard transitions.
+        // Keep the keys at the requested size instead of stretching them to that frame.
+        let contentHeight = bodyStack.heightAnchor.constraint(equalToConstant: CGFloat(LayoutProfile().height - KeyboardGeometry.topInset - KeyboardGeometry.bottomInset))
+        contentHeight.priority = .defaultHigh
+        contentHeight.isActive = true
         widthConstraint = bodyStack.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -8)
         widthConstraint?.isActive = true
         // Keep the same header geometry before, during and after prediction.
@@ -132,7 +147,6 @@ import KeyboardCore
         NSLayoutConstraint.activate([
             statusLabel.topAnchor.constraint(equalTo: header.topAnchor, constant: 0),
             statusLabel.leadingAnchor.constraint(equalTo: headerStack.leadingAnchor),
-            statusLabel.trailingAnchor.constraint(equalTo: headerStack.trailingAnchor),
             statusLabel.heightAnchor.constraint(equalToConstant: CGFloat(KeyboardGeometry.candidateHeight))
         ])
         let candidateScroll = UIScrollView(); candidateScroll.showsHorizontalScrollIndicator = false
@@ -146,7 +160,19 @@ import KeyboardCore
             candidateRow.heightAnchor.constraint(equalTo: candidateScroll.frameLayoutGuide.heightAnchor),
             candidateScroll.heightAnchor.constraint(equalToConstant: CGFloat(KeyboardGeometry.candidateHeight))
         ])
-        headerStack.addArrangedSubview(candidateScroll)
+        let candidateLine = UIStackView(); candidateLine.axis = .horizontal; candidateLine.spacing = 4
+        candidateLine.addArrangedSubview(candidateScroll)
+        let dismiss = button("キーボードを閉じる", role: .candidate) { [weak self] in
+            guard let self else { return }
+            self.lifecycleLog.info("User requested keyboard dismissal")
+            self.commitReading(); self.stopActivity(); self.closeClipboard(); self.closePalette(); self.dismissKeyboard()
+        }
+        dismiss.setTitle(nil, for: .normal); dismiss.setImage(UIImage(systemName: "chevron.down"), for: .normal)
+        dismiss.accessibilityHint = "入力中の変換を確定してキーボードを閉じます"
+        dismiss.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        candidateLine.addArrangedSubview(dismiss)
+        headerStack.addArrangedSubview(candidateLine)
+        statusLabel.trailingAnchor.constraint(equalTo: dismiss.leadingAnchor, constant: -4).isActive = true
         grid.axis = .horizontal; grid.distribution = .fill; grid.spacing = 5
         bodyStack.addArrangedSubview(grid)
         let toolbarScroll = UIScrollView(); toolbarScroll.showsHorizontalScrollIndicator = false
@@ -161,17 +187,20 @@ import KeyboardCore
         toolbar.addArrangedSubview(button("コピー", role: .toolbar) { [weak self] in self?.showClipboard() })
         toolbar.addArrangedSubview(button("←", role: .toolbar) { [weak self] in self?.moveCursor(-1) })
         toolbar.addArrangedSubview(button("→", role: .toolbar) { [weak self] in self?.moveCursor(1) })
+        for title in ["かな", "カナ", "ローマ字"] {
+            let key = button(title, role: .toolbar) { [weak self] in self?.commitLiteralReading(title) }
+            key.accessibilityLabel = title + "変換"
+            key.accessibilityHint = "入力中の読み、選択文字、またはカーソル直前の単語を変換します"
+            toolbar.addArrangedSubview(key)
+        }
+        toolbar.addArrangedSubview(button("再変換", role: .toolbar) { [weak self] in self?.startReconversion() })
         let toolbarRow = UIStackView(); toolbarRow.axis = .horizontal; toolbarRow.spacing = 4
         toolbarRow.addArrangedSubview(toolbarScroll)
-        let dismiss = button("キーボードを閉じる", role: .toolbar) { [weak self] in
-            guard let self else { return }
-            self.lifecycleLog.info("User requested keyboard dismissal")
-            self.commitReading(); self.stopActivity(); self.closeClipboard(); self.dismissKeyboard()
-        }
-        dismiss.setTitle(nil, for: .normal); dismiss.setImage(UIImage(systemName: "chevron.down"), for: .normal)
-        dismiss.accessibilityHint = "入力中の変換を確定してキーボードを閉じます"
-        dismiss.widthAnchor.constraint(equalToConstant: 44).isActive = true
-        toolbarRow.addArrangedSubview(dismiss)
+        let palette = button("カラーパレット", role: .toolbar) { [weak self] in self?.togglePalette() }
+        palette.setTitle(nil, for: .normal); palette.setImage(UIImage(systemName: "paintpalette"), for: .normal)
+        palette.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        palette.accessibilityHint = "入力を保持してキーボードのカラーを選びます"
+        toolbarRow.addArrangedSubview(palette)
         headerStack.addArrangedSubview(toolbarRow)
         globe.setImage(UIImage(systemName: "globe"), for: .normal); globe.accessibilityLabel = "次のキーボード"
         globe.addTarget(self, action: #selector(handleInputModeList(from:with:)), for: .allTouchEvents)
@@ -185,6 +214,13 @@ import KeyboardCore
             clipboardPanel.leadingAnchor.constraint(equalTo: grid.leadingAnchor), clipboardPanel.trailingAnchor.constraint(equalTo: grid.trailingAnchor),
             clipboardPanel.topAnchor.constraint(equalTo: grid.topAnchor), clipboardPanel.bottomAnchor.constraint(equalTo: grid.bottomAnchor)
         ])
+        palettePanel.axis = .vertical; palettePanel.spacing = 4; palettePanel.isHidden = true
+        palettePanel.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(palettePanel)
+        NSLayoutConstraint.activate([
+            palettePanel.leadingAnchor.constraint(equalTo: grid.leadingAnchor), palettePanel.trailingAnchor.constraint(equalTo: grid.trailingAnchor),
+            palettePanel.topAnchor.constraint(equalTo: grid.topAnchor), palettePanel.bottomAnchor.constraint(equalTo: grid.bottomAnchor)
+        ])
         heightConstraint = view.heightAnchor.constraint(equalToConstant: CGFloat(LayoutProfile().height))
         heightConstraint?.priority = UILayoutPriority(999); heightConstraint?.isActive = true
         buildGrid()
@@ -196,12 +232,13 @@ import KeyboardCore
         preferences = (try? PreferencesStore())?.load() ?? .init()
         showsCandidates = preferences.showsCandidates
         let themeStore = try? ThemeStore()
-        appearance = themeStore?.load(legacy: preferences.theme) ?? .init()
+        appearance = temporaryAppearance ?? themeStore?.load(legacy: preferences.theme) ?? .init()
         cosmos.image = nil
         applyAppearance()
         dictionary = (try? UserDictionaryStore().load()) ?? []
         conversion = conversion ?? AzooKeyConversion()
         applyLayout(); updateCandidates()
+        resetTypingFeedback()
     }
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
@@ -212,16 +249,18 @@ import KeyboardCore
     }
     override func viewWillDisappear(_ animated: Bool) {
         lifecycleLog.info("Keyboard disappearing: controller=\(self.lifecycleID, privacy: .public)")
-        commitReading(); stopActivity(); cancelComposition(); conversion?.close(); closeClipboard()
+        commitReading(); stopActivity(); cancelComposition(); conversion?.close(); closeClipboard(); closePalette()
         recent = nil
         super.viewWillDisappear(animated)
     }
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        prepareTypingFeedback()
         lifecycleLog.info("Keyboard visible: controller=\(self.lifecycleID, privacy: .public), width=\(Double(self.view.bounds.width)), height=\(Double(self.view.bounds.height))")
     }
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
+        resetTypingFeedback()
         lifecycleLog.info("Keyboard hidden: controller=\(self.lifecycleID, privacy: .public)")
     }
     override func didReceiveMemoryWarning() {
@@ -308,6 +347,7 @@ import KeyboardCore
                 guard let self else { return }
                 self.commitReading()
                 self.edit { self.textDocumentProxy.insertText(text) }
+                self.playTypingFeedback()
                 self.recent = nil
                 if CharacterCatalog.contains(text, in: .emoji) { self.emojiRecents.record(text) }
                 else if CharacterCatalog.contains(text, in: .symbol) { self.symbolRecents.record(text) }
@@ -320,8 +360,8 @@ import KeyboardCore
             keys = FlickMap.english(uppercase: uppercase)
         } else if mode == 2 {
             keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "-"].map { FlickKey([$0]) }
-        } else if mode == 3 {
-            keys = FlickMap.engineeringSymbols
+        } else if mode == 3 || mode == 6 {
+            keys = mode == 3 ? FlickMap.engineeringSymbols : FlickMap.developerSymbols
         }
         let spacing = preferences.profile(landscape: landscape).spacing
         func column() -> UIStackView {
@@ -340,14 +380,14 @@ import KeyboardCore
             let cursor = button("→") { [weak self] in self?.moveCursor(1) }
             let language = button("あA") { [weak self] in self?.switchMode(0) }
             let symbols = button("☆123") { [weak self] in self?.switchMode(2) }
-            left.addArrangedSubview(cursor); left.addArrangedSubview(language); left.addArrangedSubview(symbols)
+            left.addArrangedSubview(cursor); left.addArrangedSubview(symbols); left.addArrangedSubview(language)
             NSLayoutConstraint.activate([
-                cursor.heightAnchor.constraint(equalTo: language.heightAnchor),
-                symbols.heightAnchor.constraint(equalTo: cursor.heightAnchor, multiplier: 2, constant: spacing)
+                cursor.heightAnchor.constraint(equalTo: symbols.heightAnchor),
+                language.heightAnchor.constraint(equalTo: cursor.heightAnchor, multiplier: 2, constant: spacing)
             ])
         } else {
-            left.addArrangedSubview(button(mode == 3 ? "一覧" : "記号") { [weak self] in
-                guard let self else { return }; self.switchMode(self.mode == 3 ? 5 : 3)
+            left.addArrangedSubview(button(mode == 3 ? "記号2" : mode == 6 ? "記号1" : "記号") { [weak self] in
+                guard let self else { return }; self.switchMode(self.mode == 3 ? 6 : 3)
             })
             left.addArrangedSubview(button("123") { [weak self] in self?.switchMode(2) })
             left.addArrangedSubview(button("あA") { [weak self] in
@@ -359,7 +399,7 @@ import KeyboardCore
             let row = UIStackView(); row.axis = .horizontal; row.distribution = .fillEqually; row.spacing = spacing
             row.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
             for key in keys[(rowIndex * 3)..<(rowIndex * 3 + 3)] {
-                let control = FlickButton(key: key, typography: mode == 1 ? .latin : mode == 3 ? .code : .kana)
+                let control = FlickButton(key: key, typography: mode == 1 ? .latin : (mode == 3 || mode == 6) ? .code : .kana)
                 control.applyTheme(appearance.tokens, strong: strongAppearance)
                 control.onCommit = { [weak self] in self?.input($0) }
                 row.addArrangedSubview(control)
@@ -372,13 +412,13 @@ import KeyboardCore
         delete.addGestureRecognizer(UILongPressGestureRecognizer(target: self, action: #selector(repeatDelete(_:))))
         let space = button("空白") { [weak self] in
             guard let self, !self.spaceDidDrag else { self?.spaceDidDrag = false; return }
-            self.commitReading(); self.edit { self.textDocumentProxy.insertText(" ") }; self.recent = nil
+            self.commitReading(); self.edit { self.textDocumentProxy.insertText(" ") }; self.playTypingFeedback(); self.recent = nil
         }
         space.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(dragSpace(_:))))
         let enter = button("改行", role: .primary) { [weak self] in
             guard let self else { return }
-            if !self.composition.reading.isEmpty { self.commitReading(); return }
-            self.edit { self.textDocumentProxy.insertText("\n") }; self.recent = nil
+            if !self.composition.reading.isEmpty { self.commitReading(); self.playTypingFeedback(); return }
+            self.edit { self.textDocumentProxy.insertText("\n") }; self.playTypingFeedback(); self.recent = nil
         }
         enter.titleLabel?.numberOfLines = 2; enter.titleLabel?.textAlignment = .center
         returnButton = enter
@@ -412,15 +452,41 @@ import KeyboardCore
             KeyboardKeyStyle.apply(returnButton, tokens: appearance.tokens, strong: strongAppearance)
         }
     }
+    private func resetTypingFeedback() {
+        if #available(iOS 17.5, *), let typingFeedback { view.removeInteraction(typingFeedback) }
+        typingFeedback = nil
+    }
+    private func prepareTypingFeedback() {
+        guard preferences.hapticsEnabled, view.window != nil else { return }
+        if typingFeedback == nil {
+            if #available(iOS 17.5, *) {
+                typingFeedback = UIImpactFeedbackGenerator(style: .heavy, view: view)
+            } else { typingFeedback = UIImpactFeedbackGenerator(style: .heavy) }
+            lifecycleLog.info("Typing haptics prepared: fullAccess=\(self.hasFullAccess, privacy: .public)")
+        }
+        typingFeedback?.prepare()
+    }
+    private func playTypingFeedback() {
+        guard preferences.hapticsEnabled else { return }
+        prepareTypingFeedback()
+        typingFeedback?.impactOccurred(intensity: 1.0)
+        typingFeedback?.prepare()
+    }
     private func input(_ text: String) {
+        if committedTarget != nil { cancelCommittedConversion(); render() }
         stopWordEditing()
         recent = nil
         if text == "⇧" { uppercase.toggle(); buildGrid(); return }
-        if text == "゛小" { composition.modifyPreviousKana(); updateCandidates(); return }
+        if text == "゛小" {
+            let revision = composition.revision
+            composition.modifyPreviousKana()
+            if composition.revision != revision { playTypingFeedback() }
+            updateCandidates(); return
+        }
         if mode == 0 {
             if !composition.insert(text) { showStatus("未確定の読みが上限です。確定してください。"); return }
-            updateCandidates()
-        } else { edit { textDocumentProxy.insertText(text) } }
+            playTypingFeedback(); updateCandidates()
+        } else { edit { textDocumentProxy.insertText(text) }; playTypingFeedback() }
     }
     private func updateCandidates() {
         pendingConversion?.cancel(); render()
@@ -437,6 +503,22 @@ import KeyboardCore
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.04, execute: work)
     }
     private func render() {
+        if let target = committedTarget {
+            candidateRow.isHidden = false; statusLabel.isHidden = true
+            clear(candidateRow)
+            let cancel = button("取消", role: .candidate) { [weak self] in self?.cancelCommittedConversion(); self?.render() }
+            cancel.accessibilityHint = "本文を変更せず再変換を閉じます"
+            candidateRow.addArrangedSubview(cancel)
+            for choice in committedChoices {
+                let key = button(choice.text, role: .candidate) { [weak self] in
+                    guard let self, self.committedTarget == target else { return }
+                    self.commitCommittedText(choice.text, target: target, reading: self.committedReading)
+                }
+                key.accessibilityHint = "「\(target.text)」を「\(choice.text)」へ変換します"
+                candidateRow.addArrangedSubview(key)
+            }
+            return
+        }
         updateLiveText()
         updateReturnKey()
         let visible = showsCandidates || wordReconversion != nil
@@ -472,7 +554,53 @@ import KeyboardCore
         }
     }
     private func edit(_ action: () -> Void) { ownEdit = true; action(); ownEdit = false }
+    private func commitLiteralReading(_ form: String) {
+        if composition.reading.isEmpty {
+            guard let (target, reading) = captureCommittedTarget() else { return }
+            commitCommittedText(literalText(reading, form: form), target: target, reading: reading)
+            return
+        }
+        pendingConversion?.cancel()
+        let reading = composition.reading
+        commit(ConversionChoice(literalText(reading, form: form)))
+    }
+    private func literalText(_ reading: String, form: String) -> String {
+        switch form {
+        case "カナ": return KanaModifier.katakana(reading)
+        case "ローマ字": return KanaModifier.romaji(reading)
+        default: return KanaModifier.hiragana(reading)
+        }
+    }
+    private func captureCommittedTarget() -> (CommittedTextTarget, String)? {
+        let snapshot = DocumentProxyAdapter(proxy: textDocumentProxy).snapshot
+        let suffix: String?
+        let remembered: String?
+        suffix = CommittedTextReader.wordBeforeCursor(snapshot.before ?? "")
+        if let recent, recent.text == suffix, recent.canReplace(in: snapshot) {
+            remembered = recent.reading
+        } else { remembered = nil }
+        guard let target = CommittedTextTarget(snapshot: snapshot, suffix: suffix) else {
+            showStatus("変換する文字を選択するか、単語の直後にカーソルを置いてください。"); return nil
+        }
+        let selected = (snapshot.selected ?? "").isEmpty == false
+        guard let reading = selected ? CommittedTextReader.reading(target.text) : (remembered ?? CommittedTextReader.reading(target.text)) else {
+            showStatus("読みを取得できませんでした。かなで入力し直してください。"); return nil
+        }
+        return (target, reading)
+    }
+    private func cancelCommittedConversion() {
+        committedTarget = nil; committedReading = ""; committedChoices = []
+    }
+    private func commitCommittedText(_ text: String, target: CommittedTextTarget, reading: String) {
+        guard composition.reading.isEmpty else { return }
+        var success = false
+        edit { success = target.replace(with: text, using: DocumentProxyAdapter(proxy: textDocumentProxy)) }
+        cancelCommittedConversion(); conversion?.reset(); render()
+        recent = success ? RecentCommit(reading: reading, text: text, snapshot: DocumentProxyAdapter(proxy: textDocumentProxy).snapshot) : nil
+        if !success { showStatus("入力先の変更により変換を停止しました。本文を確認してください。") }
+    }
     private func commitReading() {
+        if committedTarget != nil { cancelCommittedConversion(); render() }
         guard !composition.reading.isEmpty else { return }
         commit(wordReconversion.map { ConversionChoice($0.text) } ?? composition.liveChoice)
     }
@@ -494,6 +622,7 @@ import KeyboardCore
         if !success { showStatus("入力先が変わったため置換を停止しました。本文を確認してください。"); recent = nil }
     }
     private func cancelComposition() {
+        cancelCommittedConversion()
         pendingConversion?.cancel()
         edit { liveSession.cancel(using: DocumentProxyAdapter(proxy: textDocumentProxy)) }
         composition.reset(); wordReconversion = nil; wordCandidates = []; replacing = nil; conversion?.reset(); render()
@@ -511,12 +640,12 @@ import KeyboardCore
             wordReconversion = WordReconversion(reading: composition.reading, choice: choices.first ?? .init(composition.reading))
             refreshWordCandidates(); return
         }
-        // Committed host replacement retains the existing experimental gate.
-        guard experimentalEditingEnabled else { showStatus("再変換は確定前に使ってください。"); return }
-        guard let recent, recent.canReplace(in: DocumentProxyAdapter(proxy: textDocumentProxy).snapshot) else {
-            showStatus("安全に再変換できる直前の入力がありません。"); return
-        }
-        replacing = recent; composition.insert(recent.reading); updateCandidates()
+        guard let (target, reading) = captureCommittedTarget() else { return }
+        pendingConversion?.cancel()
+        conversion = conversion ?? AzooKeyConversion()
+        committedTarget = target; committedReading = reading
+        committedChoices = conversion?.candidates(for: reading, preferences: preferences, dictionary: dictionary, prediction: false) ?? [.init(reading)]
+        render()
     }
     private func stopWordEditing() {
         if wordReconversion != nil {
@@ -530,12 +659,14 @@ import KeyboardCore
         render()
     }
     private func moveCursor(_ offset: Int) {
+        if committedTarget != nil { cancelCommittedConversion(); render() }
         if wordReconversion != nil { wordReconversion?.move(offset); refreshWordCandidates(); return }
         recent = nil
         if composition.reading.isEmpty { edit { textDocumentProxy.adjustTextPosition(byCharacterOffset: offset) } }
         else { composition.moveCursor(offset); updateCandidates() }
     }
     private func deleteOne() {
+        if committedTarget != nil { cancelCommittedConversion(); render() }
         stopWordEditing()
         recent = nil
         if composition.reading.isEmpty { edit { textDocumentProxy.deleteBackward() } }
@@ -571,7 +702,46 @@ import KeyboardCore
     }
     private func stopActivity() { pendingConversion?.cancel(); deletionTimer?.invalidate(); deletionTimer = nil }
 
+    private func closePalette() {
+        palettePanel.isHidden = true
+        if clipboardPanel.isHidden { grid.alpha = 1; grid.isUserInteractionEnabled = true }
+    }
+    private func togglePalette() {
+        if !palettePanel.isHidden { closePalette(); return }
+        closeClipboard()
+        clear(palettePanel)
+        palettePanel.backgroundColor = UIColor(themeHex: appearance.tokens.background)
+        palettePanel.addArrangedSubview(button("キーボードに戻る") { [weak self] in self?.closePalette() })
+        let scroll = UIScrollView(); scroll.translatesAutoresizingMaskIntoConstraints = false
+        let choices = UIStackView(); choices.axis = .vertical; choices.spacing = 4; choices.translatesAutoresizingMaskIntoConstraints = false
+        scroll.addSubview(choices)
+        NSLayoutConstraint.activate([
+            choices.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor), choices.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor),
+            choices.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor), choices.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor),
+            choices.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor)
+        ])
+        for preset in ThemeCatalog.presets {
+            let choice = button(preset.name + (appearance.presetID == preset.id ? " ✓" : "")) { [weak self] in self?.selectPalette(preset.id) }
+            choice.accessibilityIdentifier = "keyboard-palette-" + preset.id
+            choices.addArrangedSubview(choice)
+        }
+        palettePanel.addArrangedSubview(scroll)
+        palettePanel.isHidden = false; grid.alpha = 0; grid.isUserInteractionEnabled = false
+        applyAppearance()
+    }
+    private func selectPalette(_ id: String) {
+        var next = ThemeSelection(); next.presetID = id
+        if hasFullAccess {
+            do { try ThemeStore().save(next); temporaryAppearance = nil }
+            catch { showStatus("カラーを保存できませんでした。"); return }
+        } else { temporaryAppearance = next }
+        appearance = next; cosmos.image = nil
+        overrideUserInterfaceStyle = next.tokens.dark ? .dark : .light
+        applyAppearance(); closePalette()
+        if !hasFullAccess { showStatus("今回のキーボードに適用。保存にはフルアクセスが必要です。") }
+    }
     private func showClipboard() {
+        closePalette()
         guard hasFullAccess, preferences.clipboardEnabled else {
             showStatus("履歴は本体の設定とフルアクセスを有効にしてください。"); return
         }
@@ -620,23 +790,23 @@ import KeyboardCore
             let rows = UIStackView(); rows.axis = .vertical; rows.spacing = 4
             for item in try clipboard?.list(search: clipboardSearch, limit: preferences.safeClipboardLimit) ?? [] {
                 let row = UIStackView(); row.axis = .horizontal; row.spacing = 4
-                let insert = button(String(item.text.prefix(16))) { [weak self] in
+                let insert = button(item.text.components(separatedBy: .newlines).joined(separator: " ")) { [weak self] in
                     guard let self, self.hasFullAccess else { return }
                     self.commitReading(); self.edit { self.textDocumentProxy.insertText(item.text) }; self.recent = nil
                     try? self.clipboard?.markUsed(item.id); self.closeClipboard()
                 }
                 insert.accessibilityLabel = item.text
+                insert.titleLabel?.numberOfLines = 1
+                insert.titleLabel?.lineBreakMode = .byTruncatingTail
+                insert.titleLabel?.adjustsFontSizeToFitWidth = false
+                insert.contentHorizontalAlignment = .left
+                insert.setContentHuggingPriority(.defaultLow, for: .horizontal)
                 insert.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
                 row.addArrangedSubview(insert)
-                row.addArrangedSubview(button(item.pinned ? "★" : "☆") { [weak self] in self?.mutateClipboard { try $0.togglePin(item.id) } })
-                row.addArrangedSubview(button("削除") { [weak self] in self?.mutateClipboard { try $0.remove(item.id) } })
+                row.heightAnchor.constraint(equalToConstant: 44).isActive = true
                 rows.addArrangedSubview(row)
             }
             content.addArrangedSubview(rows)
         } catch { showStatus(error.localizedDescription); closeClipboard() }
-    }
-    private func mutateClipboard(_ action: (ClipboardStore) throws -> Void) {
-        guard hasFullAccess, preferences.clipboardEnabled, let clipboard else { closeClipboard(); return }
-        do { try action(clipboard); refreshClipboard() } catch { showStatus(error.localizedDescription) }
     }
 }

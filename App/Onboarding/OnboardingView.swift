@@ -5,18 +5,14 @@ import WebKit
 struct OnboardingView: View {
     var body: some View {
         List {
-            Section("キーボードを追加") {
-                Text("設定 → 一般 → キーボード → キーボード → 新しいキーボードを追加 → MyKeyboard を選択してください。")
-                Text("入力欄で地球キーから切り替えます。基本入力と変換はフルアクセスなしで使う設計です。")
-            }
-            Section("ローカルで処理") {
-                Text("通信・クラウド同期・入力全文ログはありません。設定と辞書は端末内で共有します。履歴は手動保存だけです。")
-                Text("拡張で履歴を使う場合はフルアクセスが必要です。OSは通信などを含む権限の説明を表示しますが、このアプリは通信機能を持ちません。")
-                Text("パスワード欄などでは標準キーボードへ切り替わります。他アプリがこのキーボードを拒否する場合もあります。")
+            Section("追加手順") {
+                Text("1. iPhoneの設定 → 一般 → キーボード → キーボードを開く")
+                Text("2. 新しいキーボードを追加 → MyKeyboardを選ぶ")
+                Text("3. 入力欄の地球キーからMyKeyboardに切り替える")
             }
             NavigationLink("入力テスト画面") { HostTestView() }
             NavigationLink("OSSライセンス") { LicenseView() }
-        }.navigationTitle("MyKeyboard")
+        }.navigationTitle("キーボードを追加")
     }
 }
 struct LicenseView: View {
@@ -41,7 +37,6 @@ struct HostTestView: View {
             SecureField("標準キーボード確認", text: $password)
             TextField("数字欄", text: $text).keyboardType(.numberPad)
             LocalWebInput().frame(height: 140)
-            Text("個人情報を入力せず、かな・漢字・絵文字・改行で試してください。")
         }.navigationTitle("入力テスト")
     }
 }

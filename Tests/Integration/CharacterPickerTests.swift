@@ -24,7 +24,8 @@ final class CharacterPickerTests: XCTestCase {
         XCTAssertEqual(host.text, "前🐻‍❄️後")
         try category("recent")
         XCTAssertEqual(collection.numberOfItems(inSection: 0), 1)
-        XCTAssertEqual(collection.dataSource?.collectionView(collection, cellForItemAt: IndexPath(item: 0, section: 0)).accessibilityLabel, "🐻‍❄️")
+        collection.layoutIfNeeded()
+        XCTAssertEqual(collection.cellForItem(at: IndexPath(item: 0, section: 0))?.accessibilityLabel, "🐻‍❄️")
         let tabs = try XCTUnwrap(descendants(picker, UISegmentedControl.self).first)
         tabs.selectedSegmentIndex = 1; tabs.sendActions(for: .valueChanged)
         try category("recent")
@@ -57,6 +58,21 @@ final class CharacterPickerTests: XCTestCase {
             let attachment = XCTAttachment(image: image); attachment.name = name; attachment.lifetime = .keepAlways
             add(attachment)
         }
+        for label in ["かな変換", "カナ変換", "ローマ字変換", "再変換"] {
+            XCTAssertNotNil(descendants(keyboard.view, UIButton.self).first { $0.accessibilityLabel == label })
+            try tap(label) // No reading: must leave the layout and host untouched.
+        }
+        try tap("あA")
+        let language = try XCTUnwrap(descendants(keyboard.view, UIButton.self).first { $0.accessibilityLabel == "あA" })
+        let numbers = try XCTUnwrap(descendants(keyboard.view, UIButton.self).first { $0.accessibilityLabel == "☆123" })
+        XCTAssertEqual(language.bounds.height, numbers.bounds.height * 2 + 3, accuracy: 1)
+        XCTAssertGreaterThan(language.frame.minY, numbers.frame.minY)
+        try tap("☆123")
+        XCTAssertEqual(descendants(keyboard.view, FlickButton.self).first?.key.label, "1")
+        try tap("あA")
+        try tap("あA")
+        try tap("あA") // Tall English key returns to kana.
+        XCTAssertEqual(descendants(keyboard.view, FlickButton.self).first?.key.label, "あ")
         try tap("☺")
         XCTAssertEqual(descendants(keyboard.view, CharacterPickerView.self).count, 1)
         capture("emoji-picker")
@@ -72,11 +88,17 @@ final class CharacterPickerTests: XCTestCase {
         XCTAssertEqual(recentGrid.dataSource?.collectionView(recentGrid, cellForItemAt: IndexPath(item: 0, section: 0)).accessibilityLabel, "😀")
         try tap("かな")
         try tap("記号")
-        try tap("一覧")
-        XCTAssertEqual(descendants(keyboard.view, CharacterPickerView.self).count, 1)
-        try tap("記号キー")
-        XCTAssertEqual(descendants(keyboard.view, FlickButton.self).count, 12)
-        try tap("一覧")
+        for _ in 0..<3 {
+            try tap("記号2")
+            XCTAssertEqual(descendants(keyboard.view, FlickButton.self).map { $0.key.label }, FlickMap.developerSymbols.map(\.label))
+            XCTAssertEqual(descendants(keyboard.view, CharacterPickerView.self).count, 0)
+            capture("developer-symbols")
+            try tap("記号1")
+            XCTAssertEqual(descendants(keyboard.view, FlickButton.self).map { $0.key.label }, FlickMap.engineeringSymbols.map(\.label))
+        }
+        try tap("☺")
+        let tabs = try XCTUnwrap(descendants(keyboard.view, UISegmentedControl.self).first)
+        tabs.selectedSegmentIndex = 1; tabs.sendActions(for: .valueChanged)
         XCTAssertEqual(descendants(keyboard.view, CharacterPickerView.self).count, 1)
         capture("symbol-picker")
         XCTAssertNotNil(descendants(keyboard.view, UIButton.self).first { $0.accessibilityLabel == "次のキーボード" })

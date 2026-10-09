@@ -11,6 +11,13 @@ final class ThemeStoreTests: XCTestCase {
         try store.save(selection); XCTAssertEqual(store.load(), selection)
         try Data("broken".utf8).write(to: directory.appendingPathComponent("selection.json"))
         XCTAssertEqual(store.load(legacy: .dark).presetID, "minimal-dark")
+        for retired in ["living-aurora", "pulse-neon", "windows-7"] {
+            selection.presetID = retired
+            selection.custom = ThemeCatalog.blueCosmos.tokens
+            try store.save(selection)
+            XCTAssertEqual(store.load().presetID, "blue-cosmos")
+            XCTAssertEqual(store.load().custom, selection.custom)
+        }
         selection.schemaVersion = 2; try store.save(selection)
         XCTAssertEqual(store.load().presetID, "blue-cosmos")
     }

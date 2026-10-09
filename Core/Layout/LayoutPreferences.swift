@@ -18,6 +18,7 @@ public struct KeyboardPreferences: Codable, Equatable, Sendable {
     public var landscape = LayoutProfile()
     public var theme: KeyboardTheme = .system
     public var showsCandidates = true
+    public var hapticsEnabled = true
     private var candidateVisibilityVersion = 2
     public var learningEnabled = false
     public var learningResetID = UUID()
@@ -25,7 +26,7 @@ public struct KeyboardPreferences: Codable, Equatable, Sendable {
     public var clipboardLimit = 50
     public init() {}
     private enum CodingKeys: String, CodingKey {
-        case portrait, landscape, theme, showsCandidates, candidateVisibilityVersion, learningEnabled, learningResetID, clipboardEnabled, clipboardLimit
+        case portrait, landscape, theme, showsCandidates, hapticsEnabled, candidateVisibilityVersion, learningEnabled, learningResetID, clipboardEnabled, clipboardLimit
     }
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
@@ -35,6 +36,7 @@ public struct KeyboardPreferences: Codable, Equatable, Sendable {
         // Reset the previous hidden default once; preserve explicit choices after migration.
         let visibilityVersion = try values.decodeIfPresent(Int.self, forKey: .candidateVisibilityVersion) ?? 1
         showsCandidates = visibilityVersion >= 2 ? (try values.decodeIfPresent(Bool.self, forKey: .showsCandidates) ?? true) : true
+        hapticsEnabled = try values.decodeIfPresent(Bool.self, forKey: .hapticsEnabled) ?? true
         learningEnabled = try values.decodeIfPresent(Bool.self, forKey: .learningEnabled) ?? false
         learningResetID = try values.decodeIfPresent(UUID.self, forKey: .learningResetID) ?? UUID()
         clipboardEnabled = try values.decodeIfPresent(Bool.self, forKey: .clipboardEnabled) ?? false

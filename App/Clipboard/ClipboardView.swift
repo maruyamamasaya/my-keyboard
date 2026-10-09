@@ -1,15 +1,30 @@
 import SwiftUI
 import UIKit
+import KeyboardCore
 
 struct ClipboardView: View {
     @ObservedObject var model: AppModel
     @State private var search = ""
     @State private var draft = ""
+    @State private var registrationText = ""
     @State private var confirmClear = false
     var body: some View {
         List {
+            Section("文字列を登録") {
+                TextField("登録する文字列", text: $registrationText, axis: .vertical)
+                    .lineLimit(3...6)
+                    .disabled(!model.preferences.clipboardEnabled)
+                Button("保存") {
+                    model.message = nil
+                    model.historyAction(search: search) { try $0.add(registrationText, limit: model.preferences.safeClipboardLimit) }
+                    if model.message == nil { registrationText = "" }
+                }
+                .disabled(!model.preferences.clipboardEnabled || !ClipboardPolicy.accepts(registrationText))
+            }
             Section("手動取り込み") {
-                Text("保存した内容は入力時に再利用できます。秘密情報の保存に注意してください。")
+                if !model.preferences.clipboardEnabled {
+                    Text("設定 → キーボード設定で履歴保存をONにしてください。").font(.footnote).foregroundStyle(.secondary)
+                }
                 PasteCapture { draft = $0 }.frame(height: 44).disabled(!model.preferences.clipboardEnabled)
                 if !draft.isEmpty {
                     Text(draft).lineLimit(5)
@@ -33,8 +48,8 @@ struct ClipboardView: View {
             .searchable(text: $search, prompt: "端末内を検索")
             .onChange(of: search) { _, value in if model.preferences.clipboardEnabled { model.historyAction(search: value) } }
             .onAppear { if model.preferences.clipboardEnabled { model.historyAction() } }
-            .onDisappear { draft = "" }
-            .onChange(of: model.preferences.clipboardEnabled) { _, enabled in if !enabled { draft = "" } }
+            .onDisappear { draft = ""; registrationText = "" }
+            .onChange(of: model.preferences.clipboardEnabled) { _, enabled in if !enabled { draft = ""; registrationText = "" } }
             .toolbar { Button("全削除", role: .destructive) { confirmClear = true } }
             .confirmationDialog("ピンを含む履歴をすべて削除しますか？", isPresented: $confirmClear) {
                 Button("すべて削除", role: .destructive) { model.historyAction { try $0.removeAll() } }

@@ -43,7 +43,7 @@ def project_model():
 
     shared = sorted(str(p.relative_to(ROOT)).replace("\\", "/") for folder in ["Shared", "Storage"] for p in (ROOT / folder).rglob("*.swift"))
     design = sorted(str(p.relative_to(ROOT)).replace("\\", "/") for p in (ROOT / "DesignSystem").rglob("*.swift"))
-    resources = ["Resources/PrivacyInfo.xcprivacy", "Resources/ThirdPartyNotices.txt", "Storage/Clipboard/schema.sql"]
+    resources = ["DesignSystem/Assets.xcassets", "Resources/PrivacyInfo.xcprivacy", "Resources/ThirdPartyNotices.txt", "Storage/Clipboard/schema.sql"]
     xcconfig = file("Config/Project.xcconfig")
     local_package = add("local-package", "XCLocalSwiftPackageReference", relativePath=".")
     remote_package = add("converter-package", "XCRemoteSwiftPackageReference", repositoryURL=CONVERTER_URL, requirement={"kind": "revision", "revision": REVISION})

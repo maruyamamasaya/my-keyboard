@@ -38,3 +38,9 @@ root/          共通ルール・現在地・各分野の案内
 入力ルートはKeyboardViewController内のKeyboardInputView。allowsSelfSizingを有効にし、intrinsicContentSizeとsystemLayoutSizeFittingでCoreの高さ300を返す。本体の説明も同じ値を使う。
 
 絵文字・記号の同梱Unicode一覧と最近使った項目はCore/InputEngine/CharacterCatalog.swift。KeyboardExtension/Views/CharacterPickerView.swiftがカテゴリと再利用セルを表示し、controllerが未確定入力を確定して直接挿入する。
+
+確定済み変換はCore/TextEditing/CommittedTextTarget.swiftで選択範囲または32文字以内の直前単語と文書状態を捕捉し、候補選択まで本文を変更しない。KeyboardExtension/Input/CommittedTextReader.swiftは端末内の日本語単語解析で境界と読みを得る。選択範囲はinsertTextで置換、直前単語は各削除後に文脈を照合する。[判断](decisions/0006-committed-text-conversion.md)。
+
+共通背景素材はDesignSystem/Assets.xcassets。本体・拡張・StorageTestsに同梱し、描画クラスのBundleから読み込む。利用中の画像はUIImageのキャッシュを使い、毎回の低解像度再生成を避ける。
+
+使用中のパレット選択はKeyboardViewControllerの`togglePalette` / `selectPalette`。本文を操作せず描画だけを更新し、フルアクセス有効時のみThemeStoreへ保存する。本体はアクティブ復帰時にカラーを再読込する。

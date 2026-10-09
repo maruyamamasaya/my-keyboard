@@ -7,6 +7,21 @@ import XCTest
 }
 
 final class KeyboardLifecycleTests: XCTestCase {
+    @MainActor func testOversizedHostFrameDoesNotStretchKeys() {
+        let keyboard = KeyboardViewController()
+        keyboard.loadViewIfNeeded()
+        keyboard.view.frame = CGRect(x: 0, y: 0, width: 393, height: 900)
+        keyboard.view.layoutIfNeeded()
+        func flicks(in view: UIView) -> [FlickButton] {
+            (view as? FlickButton).map { [$0] } ?? view.subviews.flatMap { flicks(in: $0) }
+        }
+        let keys = flicks(in: keyboard.view)
+        XCTAssertEqual(keys.count, 12)
+        XCTAssertTrue(keys.allSatisfy { $0.bounds.height >= 44 && $0.bounds.height <= 54 })
+        XCTAssertTrue(keys.allSatisfy { $0.convert($0.bounds, to: keyboard.view).maxY <= 300 })
+        let fitting = keyboard.view.systemLayoutSizeFitting(CGSize(width: 393, height: 900), withHorizontalFittingPriority: .required, verticalFittingPriority: .fittingSizeLevel)
+        XCTAssertEqual(fitting.height, 300)
+    }
     @MainActor func testUIKitHostsCompactKeyboardAtRequestedHeight() async throws {
         let window: UIWindow
         if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene { window = UIWindow(windowScene: scene) }

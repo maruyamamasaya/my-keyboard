@@ -4,28 +4,44 @@ import KeyboardCore
 struct SettingsView: View {
     @ObservedObject var model: AppModel
     var body: some View {
-        Form {
+        List {
+            Section("キーボード") {
+                NavigationLink("キーボード設定") { KeyboardSettingsView(model: model) }
+                NavigationLink("プレビュー") { PreviewScreen(model: model) }
+                NavigationLink("キーボードの使い方") { OnboardingView() }
+            }
             Section("カラー") {
                 NavigationLink("カラーパレット") { ThemeGallery(model: model) }
                 NavigationLink("カラーを編集") { ThemeEditor(model: model) }
-                NavigationLink("キーボードプレビュー") { PreviewScreen(model: model) }
-                KeyboardPreview(selection: model.appearance, showsCandidates: model.preferences.showsCandidates)
-                Text("縦横とも高さ\(Int(LayoutProfile().height))・幅100%・キー間隔3で固定。カラーはキーボードを開き直すと反映されます。")
             }
-            Section("変換候補") {
-                Toggle("候補を表示", isOn: $model.preferences.showsCandidates)
-                Text("既定は表示。候補の表示・非表示はこの設定で切り替えられます。")
-            }
-            Section("変換学習") {
-                Toggle("候補の選好を端末に保存", isOn: $model.preferences.learningEnabled)
-                Button("学習をリセット", role: .destructive) { model.preferences.learningResetID = UUID() }
-                Text("拡張を次に開いて変換するとリセットされます。入力全文の履歴ではありません。")
-            }
-            Section("クリップボード") {
-                Toggle("手動の履歴保存を有効にする", isOn: $model.preferences.clipboardEnabled)
-                Stepper("保存上限 \(model.preferences.safeClipboardLimit) 件", value: $model.preferences.clipboardLimit, in: 1...200)
-                Text("1件16KBまで。未ピンの項目は30日で期限切れとなり、次に履歴を開くと削除します。ピンも件数上限に含みます。自動監視はしません。")
+            Section("情報") {
+                NavigationLink("プライバシー・アプリ情報") { PrivacyInfoView() }
             }
         }.navigationTitle("設定")
+    }
+}
+
+struct KeyboardSettingsView: View {
+    @ObservedObject var model: AppModel
+    @State private var feedbackTestCount = 0
+    var body: some View {
+        Form {
+            Section("キーボード設定") {
+                Toggle("入力時に振動", isOn: $model.preferences.hapticsEnabled)
+                Button("振動を試す") { feedbackTestCount += 1 }
+                    .sensoryFeedback(.impact(weight: .heavy, intensity: 1.0), trigger: feedbackTestCount)
+                DisclosureGroup("振動しないとき") {
+                    Text("iPhoneの設定 → 一般 → キーボード → キーボード → MyKeyboard → フルアクセスを許可を確認してください。")
+                        .font(.footnote)
+                }
+                Toggle("変換候補を表示", isOn: $model.preferences.showsCandidates)
+                Toggle("変換学習", isOn: $model.preferences.learningEnabled)
+                Button("学習をリセット", role: .destructive) { model.preferences.learningResetID = UUID() }
+            }
+            Section("クリップボード") {
+                Toggle("履歴を保存", isOn: $model.preferences.clipboardEnabled)
+                Stepper("保存上限 \(model.preferences.safeClipboardLimit) 件", value: $model.preferences.clipboardLimit, in: 1...200)
+            }
+        }.navigationTitle("キーボード設定")
     }
 }

@@ -45,6 +45,9 @@ import KeyboardCore
             return true
         } catch { message = error.localizedDescription; return false }
     }
+    func reloadAppearance() {
+        appearance = (try? ThemeStore())?.load(legacy: preferences.theme) ?? appearance
+    }
     func cleanThemeImages() {
         do { try ThemeStore().removeUnusedImages(keeping: appearance) }
         catch { message = error.localizedDescription }

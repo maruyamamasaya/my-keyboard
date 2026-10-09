@@ -24,6 +24,8 @@
 - Key entry points: UIInputViewController、input、commit
 - Related tests: [Coreテスト](Tests/Unit/KeyboardCoreTests.swift)、[Mac課題](docs/07-TESTING-AND-ISSUES.md)
 
+確定済み文字: [対象と置換ガード](Core/TextEditing/CommittedTextTarget.swift)、[単語/読み](KeyboardExtension/Input/CommittedTextReader.swift)、[UIKit検証](Tests/Integration/CommittedTextConversionTests.swift)。検索語は `committedTarget`、`captureCommittedTarget`。
+
 絵文字/記号一覧: [CharacterCatalog](Core/InputEngine/CharacterCatalog.swift)、[CharacterPickerView](KeyboardExtension/Views/CharacterPickerView.swift)、[UI検証](Tests/Integration/CharacterPickerTests.swift)。
 
 ## 設定・辞書・履歴
@@ -31,6 +33,8 @@
 - Search keywords: `historyAction`、`learningResetID`、`prune`、`transaction`、`ClipboardPolicy`
 - Key entry points: AppModel、ClipboardStore、SharedContainer
 - Related tests: [保存統合テスト](Tests/Integration/ClipboardStoreTests.swift)、[構造・SQLテスト](Tests/Static/test_repository.py)
+
+本体の入口: [RootView](App/RootView.swift)はホーム（ThemeGalleryのカラーパレット）/履歴/辞書/設定の順。[設定メニューと入力設定](App/Settings/SettingsView.swift)に `SettingsView` / `KeyboardSettingsView`、使い方・プレビュー・カラー編集・アプリ情報の入口を集約。
 
 ## テーマ・UI/UX
 - Primary paths: [トークン/選択](Core/Theme/ThemeTokens.swift)、[保存](Storage/Preferences/ThemeStore.swift)、[描画](DesignSystem/Theme/ThemeRendering.swift)、[画面](App/Theme/ThemeViews.swift)、[共通フリックキー](DesignSystem/Keyboard/FlickButton.swift)、[プレビュー](DesignSystem/Preview/KeyboardPreview.swift)
@@ -60,3 +64,11 @@ rg -n 'TODO|FIXME' --glob '!sessions/**'
 
 名前不明 → 利用可能なら semantic search → 正確な名前で symbol / exact search → references → 関連テスト。
 `rg` がなければ IDE 検索、または追跡済みファイルに `git grep -n` を使う。初回コミット前の未追跡ファイルは git grep の通常対象外。
+
+XP/Vista背景: [共通Asset Catalog](DesignSystem/Assets.xcassets)、[素材/プロンプト](docs/theme-wallpapers.md)。検索語は `DesktopWallpaper`、`DesktopSurface`、`DesktopXP`、`DesktopVista`。
+
+キーボード内パレット: `togglePalette`、`selectPalette`、`temporaryAppearance`（KeyboardViewController）。保存はThemeStore、本体復帰時は`reloadAppearance`。
+
+夜空/90年代/Terminal: `NightSky`、`PixelTypography`、`terminal`、`windows-31`、`windows-95`。廃止プリセットの移行はThemeStoreの `load`。
+
+ゲーム機テーマ: `game-boy`、`game-boy-color-violet`、`super-famicom`、`isConsole`。画像とプロンプトは [基板素材](docs/console-board-assets.md)。

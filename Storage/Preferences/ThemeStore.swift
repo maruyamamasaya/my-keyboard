@@ -1,7 +1,7 @@
 import Foundation
 import KeyboardCore
 
-/// Only the containing app writes appearance. Readers never modify the shared files.
+/// The app and explicit keyboard palette actions (with full access) write appearance atomically.
 struct ThemeStore {
     private let directory: URL
     init() throws {
@@ -12,8 +12,11 @@ struct ThemeStore {
         let url = directory.appendingPathComponent("selection.json")
         guard let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize, size <= 8192,
               let data = try? Data(contentsOf: url), data.count <= 8192,
-              let value = try? JSONDecoder().decode(ThemeSelection.self, from: data), value.schemaVersion == 1 else {
+              var value = try? JSONDecoder().decode(ThemeSelection.self, from: data), value.schemaVersion == 1 else {
             return .migrating(legacy)
+        }
+        if ["living-aurora", "pulse-neon", "windows-7"].contains(value.presetID) {
+            value.presetID = ThemeCatalog.blueCosmos.id
         }
         return value
     }
